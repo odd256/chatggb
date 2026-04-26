@@ -19,8 +19,7 @@ export interface ChatSessionHandle {
   sendMessage: (text: string) => void;
 }
 
-const RETRY_MARKER = "___GGB_RETRY___";
-const MAX_RETRIES = 3;
+
 
 export const ChatSession = forwardRef<ChatSessionHandle, ChatSessionProps>(
   function ChatSession(
@@ -68,49 +67,9 @@ export const ChatSession = forwardRef<ChatSessionHandle, ChatSessionProps>(
   const clearDisplayRef = useRef(clearDisplay);
   clearDisplayRef.current = clearDisplay;
 
-  const lastProcessedMsgId = useRef<string | null>(null);
-  const retryCount = useRef(0);
 
-    useEffect(() => {
-      if (status !== "ready") return;
 
-      const visible = messages.filter((m) => m.role !== "system");
-      const lastUser = [...visible]
-        .reverse()
-        .find((m) => (m.role as string) === "user");
-      if (!lastUser) return;
 
-      const lastAssistant =
-        visible.length > 0 &&
-        (visible[visible.length - 1].role as string) === "assistant"
-          ? visible[visible.length - 1]
-          : null;
-      if (!lastAssistant || lastAssistant.id === lastProcessedMsgId.current)
-        return;
-      lastProcessedMsgId.current = lastAssistant.id;
-
-      const isRetry = getTextContent(lastUser).startsWith(RETRY_MARKER);
-      if (!isRetry) {
-        retryCount.current = 0;
-      }
-
-      const failed = commandResults.filter((r) => !r.success);
-      if (failed.length === 0) {
-        retryCount.current = 0;
-        return;
-      }
-
-      if (retryCount.current >= MAX_RETRIES) return;
-      retryCount.current++;
-
-      const errorList = failed
-        .map((r) => `- "${r.command}"\n  错误: ${r.error}`)
-        .join("\n");
-
-      sendMessage({
-        text: `${RETRY_MARKER}\n以下命令执行失败，请逐个分析错误原因并修正，然后仅输出 JSON（只包含修正后的 commands 数组）：\n\n${errorList}\n\n输出格式: {"explanation":"修正说明","commands":["正确命令1","正确命令2"]}`,
-      });
-    }, [status, commandResults, messages, sendMessage]);
 
     return (
       <MessageList
@@ -123,9 +82,4 @@ export const ChatSession = forwardRef<ChatSessionHandle, ChatSessionProps>(
   },
 );
 
-function getTextContent(msg: { parts?: Array<{ type: string; text?: string }> }): string {
-  return (msg.parts || [])
-    .filter((p) => p.type === "text")
-    .map((p) => p.text || "")
-    .join("");
-}
+
