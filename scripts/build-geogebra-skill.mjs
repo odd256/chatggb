@@ -126,6 +126,137 @@ async function fetchRawFile(file) {
   return res.text();
 }
 
+function parseCommandFile(name, content) {
+  const lines = content.split("\n");
+
+  const titleLine = lines.find(l => l.startsWith("= "));
+  if (!titleLine) return null;
+
+  const signatures = [];
+  let currentSig = null;
+  let inExample = false;
+  let inNote = false;
+  let exampleBuffer = "";
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (line.startsWith(":") || line.startsWith("ifdef") || line.startsWith("endif") || line.match(/^={3}\s/)) {
+      continue;
+    }
+
+    if (line === titleLine) continue;
+
+    if (line.trim() === "[NOTE]") {
+      inNote = true;
+      continue;
+    }
+    if (inNote && /^====\s*$/.test(line.trim())) {
+      inNote = false;
+      continue;
+    }
+    if (inNote) continue;
+
+    if (line.trim() === "[EXAMPLE]") {
+      if (currentSig) currentSig.examples = currentSig.examples || [];
+      exampleBuffer = "";
+      continue;
+    }
+
+    const isSep = /^====\s*$/.test(line.trim());
+    if (isSep) {
+      if (inExample) {
+        flushExample();
+        inExample = false;
+      } else {
+        inExample = true;
+        exampleBuffer = "";
+      }
+      continue;
+    }
+
+    if (inExample) {
+      exampleBuffer += line + "\n";
+      continue;
+    }
+
+    const sigMatch = line.match(/^(\w+\s*\(.*\))\s*(::)?\s*$/);
+    if (sigMatch) {
+      if (currentSig && currentSig.syntax) {
+        signatures.push(currentSig);
+      }
+      currentSig = {
+        syntax: cleanupSyntax(sigMatch[1]),
+        desc: "",
+        examples: [],
+      };
+      continue;
+    }
+
+    if (currentSig) {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith("[") && !trimmed.startsWith("* xref")) {
+        if (currentSig.desc) currentSig.desc += " ";
+        currentSig.desc += trimmed;
+      }
+    }
+  }
+
+  if (currentSig && currentSig.syntax) {
+    signatures.push(currentSig);
+    flushExampleTo(currentSig);
+  }
+
+  if (signatures.length === 0) return null;
+
+  const topSignatures = signatures
+    .filter(s => s.desc.length > 0)
+    .slice(0, 3);
+
+  return {
+    name,
+    syntax: topSignatures.map(s => s.syntax),
+    desc: topSignatures.map(s => s.desc),
+    examples: topSignatures.flatMap(s => s.examples).slice(0, 2),
+  };
+
+  function flushExample() {
+    if (currentSig && exampleBuffer.trim()) {
+      const cleaned = exampleBuffer.trim()
+        .replace(/`\+\+/g, "").replace(/\+\+`/g, "")
+        .replace(/\bimage:[^\s\]]+/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (cleaned) {
+        currentSig.examples.push(cleaned);
+      }
+    }
+    exampleBuffer = "";
+  }
+
+  function flushExampleTo(sig) {
+    if (exampleBuffer.trim()) {
+      sig.examples = sig.examples || [];
+      const cleaned = exampleBuffer.trim()
+        .replace(/`\+\+/g, "").replace(/\+\+`/g, "")
+        .replace(/\bimage:[^\s\]]+/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (cleaned) {
+        sig.examples.push(cleaned);
+      }
+    }
+    exampleBuffer = "";
+  }
+}
+
+function cleanupSyntax(sig) {
+  return sig
+    .replace(/`\+\+/g, "").replace(/\+\+`/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 main().catch(err => {
   console.error("Build failed:", err);
   process.exit(1);
