@@ -54,6 +54,11 @@ const CATEGORY_NAMES = {
   "CAS_Specific_Commands": "CAS Specific Commands",
 };
 
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const AUTH_HEADERS = GITHUB_TOKEN
+  ? { Authorization: `Bearer ${GITHUB_TOKEN}` }
+  : {};
+
 const SKILL_URL = new URL("../.agents/skills/geogebra-commands/SKILL.md", import.meta.url);
 const JSON_URL = new URL("../scripts/geogebra-commands.json", import.meta.url);
 const SKILL_PATH = fileURLToPath(SKILL_URL);
@@ -75,12 +80,20 @@ async function main() {
 
   // Parse all individual command files
   const commands = [];
-  for (const file of commandFiles) {
-    const content = await fetchRawFile(file);
-    const parsed = parseCommandFile(file.name.replace(".adoc", ""), content);
-    if (parsed) {
-      parsed.category = commandToCategory[parsed.name] || "Uncategorized";
-      commands.push(parsed);
+  for (let i = 0; i < commandFiles.length; i++) {
+    const file = commandFiles[i];
+    if (i > 0 && i % 50 === 0) {
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    try {
+      const content = await fetchRawFile(file);
+      const parsed = parseCommandFile(file.name.replace(".adoc", ""), content);
+      if (parsed) {
+        parsed.category = commandToCategory[parsed.name] || "Uncategorized";
+        commands.push(parsed);
+      }
+    } catch (err) {
+      console.warn(`Warning: Failed to process ${file.name}: ${err.message}`);
     }
   }
 
@@ -122,7 +135,7 @@ async function buildCategoryMap(categoryFiles) {
 
 async function fetchFileList() {
   const res = await fetch(COMMANDS_API, {
-    headers: { "Accept": "application/vnd.github.v3+json" },
+    headers: { "Accept": "application/vnd.github.v3+json", ...AUTH_HEADERS },
   });
   if (!res.ok) throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
   return res.json();
@@ -131,7 +144,7 @@ async function fetchFileList() {
 async function fetchRawFile(file) {
   if (file._content) return file._content;
   const url = `${RAW_BASE}/${file.name}`;
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: { ...AUTH_HEADERS } });
   if (!res.ok) throw new Error(`Failed to fetch ${file.name}: ${res.status}`);
   return res.text();
 }
