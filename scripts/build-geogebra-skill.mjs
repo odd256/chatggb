@@ -1,5 +1,9 @@
 #!/usr/bin/env bun
 
+import { writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
 const REPO = "geogebra/manual";
 const COMMANDS_API = `https://api.github.com/repos/${REPO}/contents/en/modules/ROOT/pages/commands`;
 const RAW_BASE = `https://raw.githubusercontent.com/${REPO}/main/en/modules/ROOT/pages/commands`;
@@ -50,8 +54,10 @@ const CATEGORY_NAMES = {
   "CAS_Specific_Commands": "CAS Specific Commands",
 };
 
-const SKILL_PATH = new URL("../.agents/skills/geogebra-commands/SKILL.md", import.meta.url).pathname;
-const JSON_PATH = new URL("../scripts/geogebra-commands.json", import.meta.url).pathname;
+const SKILL_URL = new URL("../.agents/skills/geogebra-commands/SKILL.md", import.meta.url);
+const JSON_URL = new URL("../scripts/geogebra-commands.json", import.meta.url);
+const SKILL_PATH = fileURLToPath(SKILL_URL);
+const JSON_PATH = fileURLToPath(JSON_URL);
 
 async function main() {
   console.log("Fetching command file list...");
@@ -80,12 +86,16 @@ async function main() {
 
   // Write JSON intermediate
   const structured = groupByCategory(commands);
-  Bun.write(JSON_PATH, JSON.stringify(structured, null, 2));
+  const jsonDir = dirname(JSON_PATH);
+  if (!existsSync(jsonDir)) mkdirSync(jsonDir, { recursive: true });
+  writeFileSync(JSON_PATH, JSON.stringify(structured, null, 2));
   console.log(`Written ${JSON_PATH}`);
 
   // Write SKILL.md
   const skillMd = generateSkillMd(structured);
-  await Bun.write(SKILL_PATH, skillMd);
+  const skillDir = dirname(SKILL_PATH);
+  if (!existsSync(skillDir)) mkdirSync(skillDir, { recursive: true });
+  writeFileSync(SKILL_PATH, skillMd);
   console.log(`Written ${SKILL_PATH}`);
 
   // Print system prompt snippet
@@ -262,6 +272,56 @@ function cleanupSyntax(sig) {
     .replace(/`\+\+/g, "").replace(/\+\+`/g, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function groupByCategory(commands) {
+  const grouped = {};
+  for (const cmd of commands) {
+    const cat = cmd.category;
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(cmd);
+  }
+  return grouped;
+}
+
+function generateSkillMd(grouped) {
+  let md = `---
+name: geogebra-commands
+description: |
+  Complete GeoGebra command reference for use with evalCommand() API.
+  Contains syntax, parameters, and examples for all GeoGebra commands.
+  Use when generating GeoGebra commands from natural language descriptions,
+  looking up specific command syntax, or verifying command availability.
+  Triggers on: GeoGebra commands, GGB command, geometric construction,
+  graphing calculator, evalCommand.
+---
+
+# GeoGebra Commands Reference
+
+> Complete command reference extracted from the official GeoGebra manual.
+> All commands can be passed to \`applet.evalCommand(cmd)\` in the GeoGebra JS API.
+
+`;
+
+  for (const [catKey, cmds] of Object.entries(grouped)) {
+    const catName = CATEGORY_NAMES[catKey] || catKey;
+    md += `## ${catName}\n\n`;
+
+    for (const cmd of cmds) {
+      const syn = cmd.syntax.join(" | ");
+      const d = cmd.desc[0] || "";
+      const desc = d.length > 120 ? d.slice(0, 120) + "..." : d;
+      const exStr = cmd.examples.length > 0
+        ? ` e.g. ${cmd.examples[0].slice(0, 80)}`
+        : "";
+
+      md += `- **${cmd.name}(${syn.split("(")[1]?.replace(")", "") || "..."})** | ${desc}${exStr}\n`;
+    }
+
+    md += `\n`;
+  }
+
+  return md;
 }
 
 main().catch(err => {
