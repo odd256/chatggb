@@ -93,6 +93,23 @@ async function main() {
   console.log(generateSystemPromptSnippet(commands));
 }
 
+async function buildCategoryMap(categoryFiles) {
+  const mapping = {};
+  for (const file of categoryFiles) {
+    const content = await fetchRawFile(file);
+    const lines = content.split("\n");
+    const categoryKey = file.name.replace(".adoc", "");
+
+    for (const line of lines) {
+      const match = line.match(/^\* xref:\/commands\/(\w+)\.adoc\[/);
+      if (match) {
+        mapping[match[1]] = categoryKey;
+      }
+    }
+  }
+  return mapping;
+}
+
 async function fetchFileList() {
   const res = await fetch(COMMANDS_API, {
     headers: { "Accept": "application/vnd.github.v3+json" },
