@@ -324,6 +324,51 @@ description: |
   return md;
 }
 
+function generateSystemPromptSnippet(commands) {
+  const lines = [];
+  const seen = new Set();
+
+  const priorityCommandNames = [
+    "Point", "Line", "Segment", "Ray", "Circle", "Polygon",
+    "Midpoint", "Center", "Intersect", "PerpendicularLine",
+    "ParallelLine", "Tangent", "Angle", "Distance", "Area",
+    "Length", "Perimeter", "Radius", "Circumference",
+    "Reflect", "Rotate", "Translate", "Dilate",
+    "Vector", "UnitVector", "Direction",
+    "Plane", "Sphere", "Cone", "Cylinder", "Cube",
+    "Tetrahedron", "Prism", "Pyramid",
+    "PolyLine", "Spline", "Function", "If", "Text",
+    "Slider", "Button",
+    "PointIn", "ClosestPoint", "Barycenter",
+    "PerpendicularBisector", "AngleBisector",
+    "Circumcircle", "Incircle", "CircumscribedCircle",
+  ];
+
+  for (const name of priorityCommandNames) {
+    const cmd = commands.find(c => c.name === name);
+    if (!cmd || seen.has(name)) continue;
+    seen.add(name);
+    const syn = cmd.syntax.slice(0, 3).join(" | ");
+    const brief = (cmd.desc[0] || "").split(".")[0].trim();
+    lines.push(`${name}: ${syn}${brief ? " — " + brief : ""}`);
+    if (cmd.examples[0]) {
+      lines.push(`  e.g. ${cmd.examples[0].slice(0, 100)}`);
+    }
+  }
+
+  const rules = [
+    "",
+    "## 重要规则",
+    "- 用英文逗号分隔参数，不能用中文逗号",
+    "- 点坐标用小括号: (x, y)，不能用中文括号",
+    "- 每个命令单独一行，按绘图顺序排列",
+    "- 变量名用大写字母（A, B, C...）",
+    "- 3D 坐标格式: A = (x, y, z)",
+  ];
+
+  return [...lines, ...rules].join("\n");
+}
+
 main().catch(err => {
   console.error("Build failed:", err);
   process.exit(1);
