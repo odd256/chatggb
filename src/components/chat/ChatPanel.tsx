@@ -10,9 +10,10 @@ interface ChatPanelProps {
   onOpenSettings: () => void;
   // 当前画板模式，透传给 ChatSession
   appMode: GgbAppName;
+  onToggleMode?: (mode: GgbAppName) => void;
 }
 
-export function ChatPanel({ evalCommand, onOpenSettings, appMode }: ChatPanelProps) {
+export function ChatPanel({ evalCommand, onOpenSettings, appMode, onToggleMode }: ChatPanelProps) {
   const { provider, apiKey, baseUrl, loaded } = useApiConfig();
   const hasKey = loaded && apiKey.length > 0;
   const [input, setInput] = useState("");
@@ -48,16 +49,44 @@ export function ChatPanel({ evalCommand, onOpenSettings, appMode }: ChatPanelPro
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-3 py-2 border-b flex items-center justify-between">
+      <div className="px-3 py-1.5 border-b flex items-center justify-between min-h-[40px]">
         <span className="text-sm font-medium">{providerName}</span>
-        {!hasKey && loaded && (
-          <button
-            onClick={onOpenSettings}
-            className="text-xs text-primary hover:underline"
-          >
-            请先配置 API Key
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {!hasKey && loaded && (
+            <button
+              onClick={onOpenSettings}
+              className="text-xs text-primary hover:underline"
+            >
+              请先配置 API Key
+            </button>
+          )}
+          {onToggleMode && (
+            <div className="flex items-center gap-1 rounded-md border p-0.5 bg-muted/40">
+              <button
+                onClick={() => onToggleMode("graphing")}
+                className={`px-2 py-0.5 text-[10px] rounded font-medium transition-colors ${
+                  appMode === "graphing"
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title="切换到 2D 图形计算器"
+              >
+                2D
+              </button>
+              <button
+                onClick={() => onToggleMode("3d")}
+                className={`px-2 py-0.5 text-[10px] rounded font-medium transition-colors ${
+                  appMode === "3d"
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title="切换到 3D 计算器"
+              >
+                3D
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {hasKey && transport ? (

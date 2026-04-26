@@ -48,8 +48,6 @@ function App() {
         <Header
           onOpenSettings={() => setSettingsOpen(true)}
           onClearBoard={handleClearBoard}
-          appMode={appMode}
-          onToggleMode={handleToggleMode}
         />
         <div className="flex flex-1 min-h-0">
           <div className="w-[30%] min-w-[300px] border-r">
@@ -58,6 +56,7 @@ function App() {
                 evalCommand={evalCommand}
                 onOpenSettings={() => setSettingsOpen(true)}
                 appMode="graphing"
+                onToggleMode={handleToggleMode}
               />
             </div>
             <div className={appMode === "3d" ? "h-full" : "hidden"}>
@@ -65,6 +64,7 @@ function App() {
                 evalCommand={evalCommand}
                 onOpenSettings={() => setSettingsOpen(true)}
                 appMode="3d"
+                onToggleMode={handleToggleMode}
               />
             </div>
           </div>
