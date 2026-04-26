@@ -33,35 +33,37 @@ export const GeoGebraBoard = forwardRef<
     const applet = ggbRef.current;
     if (!applet) return;
 
-    let lastW = 0;
-    let lastH = 0;
-    let timer: ReturnType<typeof setTimeout>;
-
     const syncSize = () => {
       const el = wrapperRef.current;
       if (!el || !applet) return;
-      const rect = el.getBoundingClientRect();
-      const w = Math.round(rect.width);
-      const h = Math.round(rect.height);
+      // 使用 clientWidth/clientHeight 获取内部可用空间，更适合这种绝对定位场景
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      
       if (w <= 0 || h <= 0) return;
-      if (Math.abs(w - lastW) < 10 && Math.abs(h - lastH) < 10) return;
-      lastW = w;
-      lastH = h;
+      
       try {
+        // GeoGebra 有时需要强制触发内部重绘
         applet.setSize(w, h);
-      } catch {}
+        if (applet.recalculateEnvironments) {
+          applet.recalculateEnvironments();
+        }
+      } catch (e) {
+        console.error("GeoGebra resize error:", e);
+      }
     };
 
+    // 移除 200ms 的延迟防抖，改为直接使用 requestAnimationFrame 确保平滑度
     const observer = new ResizeObserver(() => {
-      clearTimeout(timer);
-      timer = setTimeout(() => requestAnimationFrame(syncSize), 200);
+      requestAnimationFrame(syncSize);
     });
+
     observer.observe(wrapperRef.current);
-    requestAnimationFrame(syncSize);
+    // 初始同步
+    syncSize();
 
     return () => {
       observer.disconnect();
-      clearTimeout(timer);
     };
   }, [isReady, ggbRef]);
 

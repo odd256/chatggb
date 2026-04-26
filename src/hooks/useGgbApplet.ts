@@ -91,6 +91,10 @@ export function useGgbApplet({ appName = "graphing" }: UseGgbAppletOptions = {})
           language: "zh",
           borderColor: "transparent",
           enableRightClick: false,
+          // 关键修复：禁用内置的缩放机制，使用外部容器尺寸
+          disableAutoScale: true,
+          width: "100%",
+          height: "100%",
           appletOnLoad: function (api: any) {
             if (cancelled) return;
             ggbRef.current = api || (window as any)[id] || window.ggbApplet;
