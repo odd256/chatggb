@@ -13,9 +13,9 @@ import "./App.css";
 
 function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  // 全局画板模式："graphing" = 2D，"3d" = 三维
   const [appMode, setAppMode] = useState<GgbAppName>("graphing");
-  const boardRef = useRef<GeoGebraBoardHandle>(null);
+  const board2dRef = useRef<GeoGebraBoardHandle>(null);
+  const board3dRef = useRef<GeoGebraBoardHandle>(null);
   const { provider, apiKey, baseUrl, loaded, saveConfig } = useApiKey();
   const hasPromptedSettings = useRef(false);
 
@@ -27,21 +27,17 @@ function App() {
   }, [loaded, apiKey]);
 
   const evalCommand = useCallback((cmd: string) => {
-    if (boardRef.current) {
-      return boardRef.current.evalCommand(cmd);
-    }
-    return { success: false, error: "Board not initialized" };
-  }, []);
+    const ref = appMode === "graphing" ? board2dRef : board3dRef;
+    return ref.current?.evalCommand(cmd) ?? { success: false, error: "Board not initialized" };
+  }, [appMode]);
 
   const handleClearBoard = useCallback(() => {
-    boardRef.current?.reset();
-  }, []);
+    (appMode === "graphing" ? board2dRef : board3dRef).current?.reset();
+  }, [appMode]);
 
-  // 切换模式时清空画板（2D/3D 对象不兼容）
   const handleToggleMode = useCallback((mode: GgbAppName) => {
     if (mode === appMode) return;
     setAppMode(mode);
-    // GeoGebraBoard 会因 appName 变化而重新挂载，自动清空
   }, [appMode]);
 
   return (
@@ -57,14 +53,28 @@ function App() {
         />
         <div className="flex flex-1 min-h-0">
           <div className="w-[30%] min-w-[300px] border-r">
-            <ChatPanel
-              evalCommand={evalCommand}
-              onOpenSettings={() => setSettingsOpen(true)}
-              appMode={appMode}
-            />
+            <div className={appMode === "graphing" ? "h-full" : "hidden"}>
+              <ChatPanel
+                evalCommand={evalCommand}
+                onOpenSettings={() => setSettingsOpen(true)}
+                appMode="graphing"
+              />
+            </div>
+            <div className={appMode === "3d" ? "h-full" : "hidden"}>
+              <ChatPanel
+                evalCommand={evalCommand}
+                onOpenSettings={() => setSettingsOpen(true)}
+                appMode="3d"
+              />
+            </div>
           </div>
-          <div className="flex-1">
-            <GeoGebraBoard ref={boardRef} className="w-full h-full" appName={appMode} />
+          <div className="flex-1 relative">
+            <div className={appMode === "graphing" ? "absolute inset-0" : "absolute inset-0 pointer-events-none invisible"}>
+              <GeoGebraBoard ref={board2dRef} className="w-full h-full" appName="graphing" />
+            </div>
+            <div className={appMode === "3d" ? "absolute inset-0" : "absolute inset-0 pointer-events-none invisible"}>
+              <GeoGebraBoard ref={board3dRef} className="w-full h-full" appName="3d" />
+            </div>
           </div>
         </div>
         <SettingsDialog
