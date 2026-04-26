@@ -136,6 +136,7 @@ function parseCommandFile(name, content) {
   let currentSig = null;
   let inExample = false;
   let inNote = false;
+  let noteOpenerSeen = false;
   let exampleBuffer = "";
 
   for (let i = 0; i < lines.length; i++) {
@@ -149,10 +150,16 @@ function parseCommandFile(name, content) {
 
     if (line.trim() === "[NOTE]") {
       inNote = true;
+      noteOpenerSeen = false;
       continue;
     }
     if (inNote && /^====\s*$/.test(line.trim())) {
-      inNote = false;
+      if (!noteOpenerSeen) {
+        noteOpenerSeen = true;
+      } else {
+        inNote = false;
+        noteOpenerSeen = false;
+      }
       continue;
     }
     if (inNote) continue;
