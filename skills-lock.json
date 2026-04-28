@@ -16,6 +16,7 @@
     "rust-best-practices": {
       "source": "apollographql/skills",
       "sourceType": "github",
+      "skillPath": "skills/rust-best-practices/SKILL.md",
       "computedHash": "3f89cd417842ca60bffefea01ee88fc28116b75a8e69329c4d6db446fbfcad02"
     },
     "shadcn": {
@@ -27,11 +28,13 @@
     "tailwind-design-system": {
       "source": "wshobson/agents",
       "sourceType": "github",
+      "skillPath": "plugins/frontend-mobile-development/skills/tailwind-design-system/SKILL.md",
       "computedHash": "f54f39ce967af3a4bba1f662c3600f0253467508d5fbbc7c545c67e102da2253"
     },
     "tauri-v2": {
       "source": "nodnarbnitram/claude-code-extensions",
       "sourceType": "github",
+      "skillPath": ".claude/skills/tauri-v2/SKILL.md",
       "computedHash": "7108944eec3bef17686df9ebae9c9bdbee7809744930c8734c979e3c4573eaab"
     }
   }
