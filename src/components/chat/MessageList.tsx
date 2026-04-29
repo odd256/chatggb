@@ -1,36 +1,21 @@
 import { useEffect, useRef } from "react";
 import { MessageBubble } from "./MessageBubble";
-import type { CommandResult } from "@/hooks/useStreamParser";
-
-interface UIPart {
-  type: string;
-  text?: string;
-}
-
-interface Message {
-  id: string;
-  role: "user" | "assistant" | "system";
-  parts: UIPart[];
-}
+import type { UIMessage } from "ai";
 
 interface MessageListProps {
-  messages: Message[];
-  explanation: string;
-  commandResults: CommandResult[];
+  messages: UIMessage[];
   status: string;
 }
 
 export function MessageList({
   messages,
-  explanation,
-  commandResults,
   status,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, explanation, commandResults]);
+  }, [messages, status]);
 
   const visibleMessages = messages.filter((m) => m.role !== "system");
 
@@ -42,25 +27,13 @@ export function MessageList({
         </div>
       )}
 
-      {visibleMessages.map((msg, i) => {
-        const isLastAssistant =
-          msg.role === "assistant" && i === visibleMessages.length - 1;
-        return (
-          <MessageBubble
-            key={msg.id}
-            role={msg.role as "user" | "assistant"}
-            parts={msg.parts}
-            explanation={
-              isLastAssistant && explanation ? explanation : undefined
-            }
-            commandResults={
-              isLastAssistant && commandResults.length > 0
-                ? commandResults
-                : undefined
-            }
-          />
-        );
-      })}
+      {visibleMessages.map((msg) => (
+        <MessageBubble
+          key={msg.id}
+          role={msg.role as "user" | "assistant"}
+          parts={msg.parts as any[]}
+        />
+      ))}
 
       {status === "submitted" && (
         <div className="flex items-center gap-2 text-muted-foreground text-xs px-3">

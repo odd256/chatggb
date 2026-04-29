@@ -144,5 +144,54 @@ export function useGgbApplet({ appName = "graphing" }: UseGgbAppletOptions = {})
     }
   }, []);
 
-  return { isReady, loadError, evalCommand, reset, ggbRef, containerId };
+  const getBoardState = useCallback(() => {
+    if (!ggbRef.current) return [];
+    const api = ggbRef.current;
+    const count = api.getObjectNumber();
+    const objects = [];
+    for (let i = 0; i < count; i++) {
+      const name = api.getObjectName(i);
+      const type = api.getObjectType(name);
+      const definition = api.getDefinitionString(name);
+      const value = api.getValueString(name);
+      objects.push({ name, type, definition, value });
+    }
+    return objects;
+  }, []);
+
+  const deleteObject = useCallback((name: string) => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      if (!ggbRef.current.exists(name)) {
+        return { success: false, error: `对象 "${name}" 不存在` };
+      }
+      ggbRef.current.deleteObject(name);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const undo = useCallback(() => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      ggbRef.current.undo();
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const getSelectedObjects = useCallback(() => {
+    if (!ggbRef.current) return [];
+    try {
+      // getSelectedObjectNames() returns a JavaScript Array of Strings
+      const names = ggbRef.current.getSelectedObjectNames();
+      return Array.isArray(names) ? names : [];
+    } catch (e: any) {
+      return [];
+    }
+  }, []);
+
+  return { isReady, loadError, evalCommand, reset, getBoardState, deleteObject, undo, getSelectedObjects, ggbRef, containerId };
 }

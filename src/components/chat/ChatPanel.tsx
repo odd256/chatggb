@@ -2,18 +2,23 @@ import { useMemo, useState, useRef, useCallback } from "react";
 import { ChatInput } from "./ChatInput";
 import { ChatSession, type ChatSessionHandle } from "./ChatSession";
 import { useApiConfig } from "@/contexts/ApiConfigContext";
-import { createChatTransport, getProvider } from "@/lib/ai";
+import { createAgentTransport, getProvider } from "@/services/ai";
 import type { GgbAppName } from "@/hooks/useGgbApplet";
 
 interface ChatPanelProps {
   evalCommand: (cmd: string) => { success: boolean; error?: string };
+  getBoardState: () => any[];
+  deleteObject: (name: string) => { success: boolean; error?: string };
+  resetCanvas: () => void;
+  undo: () => { success: boolean; error?: string };
+  getSelectedObjects: () => string[];
   onOpenSettings: () => void;
   // 当前画板模式，透传给 ChatSession
   appMode: GgbAppName;
   onToggleMode?: (mode: GgbAppName) => void;
 }
 
-export function ChatPanel({ evalCommand, onOpenSettings, appMode, onToggleMode }: ChatPanelProps) {
+export function ChatPanel({ evalCommand, getBoardState, deleteObject, resetCanvas, undo, getSelectedObjects, onOpenSettings, appMode, onToggleMode }: ChatPanelProps) {
   const { provider, apiKey, baseUrl, loaded } = useApiConfig();
   const hasKey = loaded && apiKey.length > 0;
   const [input, setInput] = useState("");
@@ -26,8 +31,8 @@ export function ChatPanel({ evalCommand, onOpenSettings, appMode, onToggleMode }
     if (!hasKey) return undefined;
     const p = getProvider(provider);
     if (!p) return undefined;
-    return createChatTransport(apiKey, p, baseUrl || undefined);
-  }, [apiKey, provider, baseUrl, hasKey]);
+    return createAgentTransport(apiKey, p, baseUrl || undefined, evalCommand, getBoardState, deleteObject, resetCanvas, undo, getSelectedObjects, appMode);
+  }, [apiKey, provider, baseUrl, hasKey, evalCommand, appMode]);
 
   const onSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -93,10 +98,8 @@ export function ChatPanel({ evalCommand, onOpenSettings, appMode, onToggleMode }
         <ChatSession
           ref={sessionRef}
           transport={transport}
-          evalCommand={evalCommand}
           onInputConsumed={() => setInput("")}
           onLoadingChange={setSending}
-          appMode={appMode}
         />
       ) : (
         <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm p-4 text-center">

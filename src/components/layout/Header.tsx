@@ -2,8 +2,6 @@ import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Settings, Trash2, Minus, Square, X } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import type { GgbAppName } from "@/hooks/useGgbApplet";
-
 interface HeaderProps {
   onOpenSettings: () => void;
   onClearBoard: () => void;

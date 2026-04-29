@@ -35,6 +35,26 @@ function App() {
     (appMode === "graphing" ? board2dRef : board3dRef).current?.reset();
   }, [appMode]);
 
+  const getBoardState = useCallback(() => {
+    const ref = appMode === "graphing" ? board2dRef : board3dRef;
+    return ref.current?.getBoardState() ?? [];
+  }, [appMode]);
+
+  const deleteObject = useCallback((name: string) => {
+    const ref = appMode === "graphing" ? board2dRef : board3dRef;
+    return ref.current?.deleteObject(name) ?? { success: false, error: "Board not initialized" };
+  }, [appMode]);
+
+  const undo = useCallback(() => {
+    const ref = appMode === "graphing" ? board2dRef : board3dRef;
+    return ref.current?.undo() ?? { success: false, error: "Board not initialized" };
+  }, [appMode]);
+
+  const getSelectedObjects = useCallback(() => {
+    const ref = appMode === "graphing" ? board2dRef : board3dRef;
+    return ref.current?.getSelectedObjects() ?? [];
+  }, [appMode]);
+
   const handleToggleMode = useCallback((mode: GgbAppName) => {
     if (mode === appMode) return;
     setAppMode(mode);
@@ -54,6 +74,11 @@ function App() {
             <div className={appMode === "graphing" ? "h-full" : "hidden"}>
               <ChatPanel
                 evalCommand={evalCommand}
+                getBoardState={getBoardState}
+                deleteObject={deleteObject}
+                resetCanvas={handleClearBoard}
+                undo={undo}
+                getSelectedObjects={getSelectedObjects}
                 onOpenSettings={() => setSettingsOpen(true)}
                 appMode="graphing"
                 onToggleMode={handleToggleMode}
@@ -62,6 +87,11 @@ function App() {
             <div className={appMode === "3d" ? "h-full" : "hidden"}>
               <ChatPanel
                 evalCommand={evalCommand}
+                getBoardState={getBoardState}
+                deleteObject={deleteObject}
+                resetCanvas={handleClearBoard}
+                undo={undo}
+                getSelectedObjects={getSelectedObjects}
                 onOpenSettings={() => setSettingsOpen(true)}
                 appMode="3d"
                 onToggleMode={handleToggleMode}
