@@ -123,13 +123,89 @@ export function useGgbApplet({ appName = "graphing" }: UseGgbAppletOptions = {})
     };
   }, [containerId, appName]);
 
+  /** 解析 FuncName(arg1, arg2, ...) 的参数列表，正确处理嵌套括号 */
+  function parseArgs(argsStr: string): string[] {
+    const args: string[] = [];
+    let depth = 0;
+    let current = "";
+    for (const ch of argsStr) {
+      if (ch === "(") depth++;
+      else if (ch === ")") depth--;
+      if (ch === "," && depth === 0) {
+        args.push(current.trim());
+        current = "";
+      } else {
+        current += ch;
+      }
+    }
+    if (current.trim()) args.push(current.trim());
+    return args;
+  }
+
   const evalCommand = useCallback(
     (cmd: string): CommandResult => {
       if (!ggbRef.current) {
         return { success: false, error: "GeoGebra 尚未就绪" };
       }
+      const api = ggbRef.current;
       try {
-        ggbRef.current.evalCommand(cmd);
+        // 自动重定向不支持 evalCommand 的命令到 JS API
+        // 兼容圆括号 FuncName(...) 和方括号 FuncName[...] 两种写法
+        const match = cmd.match(/^(\w+)\(([\s\S]*)\)$/) || cmd.match(/^(\w+)\[([\s\S]*)\]$/);
+        if (match) {
+          const func = match[1].toLowerCase();
+          const args = parseArgs(match[2]);
+          // 统一小写匹配，兼容 SetColor / setColor / setcolor 等写法
+          if (func === "setcolor" && args.length >= 4) {
+            const [name, r, g, b] = args;
+            if (api.exists(name)) { api.setColor(name, +r, +g, +b); return { success: true }; }
+          } else if (func === "setpointsize" && args.length >= 2) {
+            const [name, size] = args;
+            if (api.exists(name)) { api.setPointSize(name, +size); return { success: true }; }
+          } else if (func === "setlinethickness" && args.length >= 2) {
+            const [name, thickness] = args;
+            if (api.exists(name)) { api.setLineThickness(name, +thickness); return { success: true }; }
+          } else if (func === "setvisible" && args.length >= 2) {
+            const [name, vis] = args;
+            if (api.exists(name)) { api.setVisible(name, vis === "true"); return { success: true }; }
+          } else if (func === "setactive" && args.length >= 2) {
+            const [name, act] = args;
+            if (api.exists(name)) { api.setActive(name, act === "true"); return { success: true }; }
+          } else if (func === "showgrid" && args.length >= 1) {
+            if (typeof api.setShowGrid === "function") { api.setShowGrid(args[0] === "true"); } else { api.evalCommand(`ShowGrid(${args[0]})`); }
+            return { success: true };
+          } else if (func === "showaxes" && args.length >= 1) {
+            const v = args[0] === "true";
+            if (typeof api.setShowAxes === "function") { api.setShowAxes(v, v); } else { api.evalCommand(args.length >= 2 ? `ShowAxes(${args[0]}, ${args[1]})` : `ShowAxes(${args[0]})`); }
+            return { success: true };
+          } else if (func === "setvalue" && args.length >= 2) {
+            const [name, val] = args;
+            if (api.exists(name)) { api.setValue(name, +val); return { success: true }; }
+          } else if (func === "setcaption" && args.length >= 2) {
+            const name = args[0];
+            const caption = args.slice(1).join(",").replace(/^["']|["']$/g, "");
+            if (api.exists(name)) { api.setCaption(name, caption); return { success: true }; }
+          } else if (func === "setanimating" && args.length >= 2) {
+            const [name, anim] = args;
+            if (api.exists(name)) { api.evalCommand(`StartAnimation(${name}, ${anim})`); return { success: true }; }
+          } else if (func === "setanimationspeed" && args.length >= 2) {
+            const [name, speed] = args;
+            if (api.exists(name)) { api.evalCommand(`${name}.speed = ${speed}`); return { success: true }; }
+          } else if (func === "setconditiontoshowobject" && args.length >= 2) {
+            const name = args[0];
+            const condition = args.slice(1).join(",");
+            if (api.exists(name)) { api.setConditionToShowObject(name, condition); return { success: true }; }
+          } else if (func === "deleteobject" && args.length >= 1) {
+            const name = args[0].replace(/^["']|["']$/g, "");
+            if (api.exists(name)) { api.deleteObject(name); return { success: true }; }
+          }
+        }
+        // 默认：原生 evalCommand
+        const ok = api.evalCommand(cmd);
+        if (!ok) {
+          const code = api.getErrorCode?.();
+          return { success: false, error: code ? `GeoGebra 错误码: ${code}` : "命令执行失败" };
+        }
         return { success: true };
       } catch (e: any) {
         return { success: false, error: e.message || String(e) };
@@ -193,5 +269,235 @@ export function useGgbApplet({ appName = "graphing" }: UseGgbAppletOptions = {})
     }
   }, []);
 
-  return { isReady, loadError, evalCommand, reset, getBoardState, deleteObject, undo, getSelectedObjects, ggbRef, containerId };
+  const setValue = useCallback((name: string, value: number) => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      if (!ggbRef.current.exists(name)) {
+        return { success: false, error: `对象 "${name}" 不存在` };
+      }
+      ggbRef.current.setValue(name, value);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const setVisible = useCallback((name: string, visible: boolean) => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      if (!ggbRef.current.exists(name)) {
+        return { success: false, error: `对象 "${name}" 不存在` };
+      }
+      ggbRef.current.setVisible(name, visible);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const startAnimation = useCallback(() => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      ggbRef.current.startAnimation();
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const stopAnimation = useCallback(() => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      ggbRef.current.stopAnimation();
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const setAnimating = useCallback((name: string, animating: boolean) => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      if (!ggbRef.current.exists(name)) {
+        return { success: false, error: `对象 "${name}" 不存在` };
+      }
+      // StartAnimation(name, true/false) 控制单个对象的动画开关
+      ggbRef.current.evalCommand(`StartAnimation(${name}, ${animating})`);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const setAnimationSpeed = useCallback((name: string, speed: number) => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      if (!ggbRef.current.exists(name)) {
+        return { success: false, error: `对象 "${name}" 不存在` };
+      }
+      // GeoGebra 没有 SetAnimationSpeed 命令，通过设置对象的 speed 属性实现
+      ggbRef.current.evalCommand(`${name}.speed = ${speed}`);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const setShowGrid = useCallback((visible: boolean) => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      const api = ggbRef.current;
+      if (typeof api.setShowGrid === "function") {
+        api.setShowGrid(visible);
+      } else {
+        // web simple 版本可能没有 setShowGrid 方法，fallback 到 evalCommand
+        api.evalCommand(`ShowGrid(${visible})`);
+      }
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const setShowAxes = useCallback((visible: boolean) => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      const api = ggbRef.current;
+      if (typeof api.setShowAxes === "function") {
+        api.setShowAxes(visible, visible);
+      } else {
+        api.evalCommand(`ShowAxes(${visible}, ${visible})`);
+      }
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const setActive = useCallback((name: string, active: boolean) => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      if (!ggbRef.current.exists(name)) {
+        return { success: false, error: `对象 "${name}" 不存在` };
+      }
+      ggbRef.current.setActive(name, active);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const setPointSize = useCallback((name: string, size: number) => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      if (!ggbRef.current.exists(name)) {
+        return { success: false, error: `对象 "${name}" 不存在` };
+      }
+      ggbRef.current.setPointSize(name, size);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const setColor = useCallback((name: string, r: number, g: number, b: number) => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      if (!ggbRef.current.exists(name)) {
+        return { success: false, error: `对象 "${name}" 不存在` };
+      }
+      ggbRef.current.setColor(name, r, g, b);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const setCaption = useCallback((name: string, caption: string) => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      if (!ggbRef.current.exists(name)) {
+        return { success: false, error: `对象 "${name}" 不存在` };
+      }
+      ggbRef.current.setCaption(name, caption);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const setConditionToShowObject = useCallback((name: string, condition: string) => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      if (!ggbRef.current.exists(name)) {
+        return { success: false, error: `对象 "${name}" 不存在` };
+      }
+      ggbRef.current.setConditionToShowObject(name, condition);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const setLineThickness = useCallback((name: string, thickness: number) => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      if (!ggbRef.current.exists(name)) {
+        return { success: false, error: `对象 "${name}" 不存在` };
+      }
+      ggbRef.current.setLineThickness(name, thickness);
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const exportXML = useCallback((): string => {
+    if (!ggbRef.current) return "";
+    try {
+      return ggbRef.current.getXML();
+    } catch {
+      return "";
+    }
+  }, []);
+
+  const importXML = useCallback((xml: string): boolean => {
+    if (!ggbRef.current || !xml) return false;
+    try {
+      ggbRef.current.reset();
+      ggbRef.current.evalXML(xml);
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  return {
+    isReady,
+    loadError,
+    evalCommand,
+    reset,
+    getBoardState,
+    deleteObject,
+    undo,
+    getSelectedObjects,
+    setValue,
+    setVisible,
+    startAnimation,
+    stopAnimation,
+    setAnimating,
+    setAnimationSpeed,
+    setShowGrid,
+    setShowAxes,
+    setActive,
+    setPointSize,
+    setColor,
+    setCaption,
+    setConditionToShowObject,
+    setLineThickness,
+    exportXML,
+    importXML,
+    ggbRef,
+    containerId
+  };
 }

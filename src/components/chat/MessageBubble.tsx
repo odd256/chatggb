@@ -2,7 +2,7 @@ import ReactMarkdown from "react-markdown";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { CheckCircle, XCircle } from "lucide-react";
-import { getTextFromParts } from "@/services/ai";
+import { getTextFromParts } from "@/agent";
 
 interface MessageBubbleProps {
   role: "user" | "assistant" | "system";
@@ -16,8 +16,26 @@ export function MessageBubble({
   const isUser = role === "user";
 
   const textParts = parts.filter((p) => p.type === "text" || p.text);
-  const toolParts = parts.filter((p) => typeof p.type === "string" && p.type.startsWith("tool-"));
   const textContent = getTextFromParts(textParts);
+
+  // 按 toolCallId 分组工具调用和结果
+  const groupedToolParts = (() => {
+    const toolMap: Record<string, any> = {};
+    parts.forEach((p) => {
+      if (p.type === "tool-call" || p.type === "tool-result") {
+        const id = p.toolCallId;
+        if (!toolMap[id]) {
+          toolMap[id] = { ...p, state: p.type === "tool-call" ? "call" : "result" };
+        } else {
+          Object.assign(toolMap[id], p);
+          if (p.type === "tool-result") {
+            toolMap[id].state = "result";
+          }
+        }
+      }
+    });
+    return Object.values(toolMap);
+  })();
 
   return (
     <div
@@ -45,7 +63,7 @@ export function MessageBubble({
         </div>
       )}
 
-      {toolParts?.map((toolInvocation) => {
+      {groupedToolParts?.map((toolInvocation) => {
         const { toolName, toolCallId, state } = toolInvocation;
 
         if (toolName === "evalCommand") {

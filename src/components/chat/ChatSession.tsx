@@ -1,25 +1,29 @@
 import { useChat } from "@ai-sdk/react";
 import { useImperativeHandle, forwardRef, useEffect } from "react";
 import { MessageList } from "./MessageList";
-import type { ChatTransport } from "ai";
+import type { ChatTransport, UIMessage } from "ai";
 
 interface ChatSessionProps {
   transport: ChatTransport<any>;
+  initialMessages?: UIMessage[];
   onInputConsumed: () => void;
   onLoadingChange: (loading: boolean) => void;
+  onMessagesChange?: (messages: UIMessage[]) => void;
 }
 
 export interface ChatSessionHandle {
   sendMessage: (text: string) => void;
+  setMessages: (messages: UIMessage[] | ((prev: UIMessage[]) => UIMessage[])) => void;
 }
 
 export const ChatSession = forwardRef<ChatSessionHandle, ChatSessionProps>(
   function ChatSession(
-    { transport, onInputConsumed, onLoadingChange },
+    { transport, initialMessages, onInputConsumed, onLoadingChange, onMessagesChange },
     ref,
   ) {
-    const { messages, sendMessage, status } = useChat({
+    const { messages, sendMessage, setMessages, status } = useChat({
       transport,
+      messages: initialMessages,
       onError: (error) => {
         console.error("Chat error:", error);
       },
@@ -31,6 +35,10 @@ export const ChatSession = forwardRef<ChatSessionHandle, ChatSessionProps>(
       onLoadingChange(isLoading);
     }, [isLoading, onLoadingChange]);
 
+    useEffect(() => {
+      onMessagesChange?.(messages);
+    }, [messages, onMessagesChange]);
+
     useImperativeHandle(
       ref,
       () => ({
@@ -38,8 +46,9 @@ export const ChatSession = forwardRef<ChatSessionHandle, ChatSessionProps>(
           sendMessage({ text });
           onInputConsumed();
         },
+        setMessages,
       }),
-      [sendMessage, onInputConsumed],
+      [sendMessage, onInputConsumed, setMessages],
     );
 
     return (

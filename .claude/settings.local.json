@@ -6,7 +6,22 @@
       "Bash(bun run *)",
       "WebSearch",
       "WebFetch(domain:sdk.vercel.ai)",
-      "WebFetch(domain:wiki.geogebra.org)"
+      "WebFetch(domain:wiki.geogebra.org)",
+      "Bash(bunx tsc *)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); cmds=d.get\\('docs',{}\\); [print\\(k\\) for k in cmds if 'grid' in k.lower\\(\\) or 'axes' in k.lower\\(\\) or 'show' in k.lower\\(\\)]\")",
+      "Bash(node -e \"const d=require\\('./src/services/ai/geogebra-commands.json'\\); const cmds=Object.keys\\(d.docs||{}\\); cmds.filter\\(k=>/grid|axes|show/i.test\\(k\\)\\).forEach\\(k=>console.log\\(k,'-',d.docs[k].substring\\(0,100\\)\\)\\)\")",
+      "Bash(node -e \"const d=require\\('./src/services/ai/geogebra-commands.json'\\); const cmds=Object.keys\\(d.docs||{}\\); cmds.filter\\(k=>/grid|axes/i.test\\(k\\)\\).forEach\\(k=>console.log\\('=== '+k+' ===\\\\n'+d.docs[k]+'\\\\n'\\)\\)\")",
+      "Bash(ls -la public/deployggb.js)",
+      "Bash(head -20 public/deployggb.js)",
+      "Bash(git mv *)",
+      "Bash(mv src/services/ai/geogebra-commands.json src/agent/geogebra-commands.json)",
+      "Bash(rmdir src/services/ai)",
+      "Bash(rmdir src/services)",
+      "Bash(ls src/components/geogebra/)",
+      "Bash(rmdir src/components/geogebra)",
+      "Bash(rm \"D:\\\\projects\\\\easy_project\\\\chat_ggb\\\\src\\\\components\\\\controls\\\\HistoryControls.tsx\")",
+      "Bash(rmdir \"D:\\\\projects\\\\easy_project\\\\chat_ggb\\\\src\\\\components\\\\controls\")",
+      "Bash(cargo check *)"
     ]
   }
 }

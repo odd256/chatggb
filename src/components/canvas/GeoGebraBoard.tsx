@@ -6,6 +6,26 @@ import { Button } from "@/components/ui/button";
 export interface GeoGebraBoardHandle {
   evalCommand: (cmd: string) => { success: boolean; error?: string };
   reset: () => void;
+  getBoardState: () => any[];
+  deleteObject: (name: string) => { success: boolean; error?: string };
+  undo: () => { success: boolean; error?: string };
+  getSelectedObjects: () => string[];
+  setValue: (name: string, value: number) => { success: boolean; error?: string };
+  setVisible: (name: string, visible: boolean) => { success: boolean; error?: string };
+  startAnimation: () => { success: boolean; error?: string };
+  stopAnimation: () => { success: boolean; error?: string };
+  setAnimating: (name: string, animating: boolean) => { success: boolean; error?: string };
+  setAnimationSpeed: (name: string, speed: number) => { success: boolean; error?: string };
+  setShowGrid: (visible: boolean) => { success: boolean; error?: string };
+  setShowAxes: (visible: boolean) => { success: boolean; error?: string };
+  setActive: (name: string, active: boolean) => { success: boolean; error?: string };
+  setPointSize: (name: string, size: number) => { success: boolean; error?: string };
+  setColor: (name: string, r: number, g: number, b: number) => { success: boolean; error?: string };
+  setCaption: (name: string, caption: string) => { success: boolean; error?: string };
+  setConditionToShowObject: (name: string, condition: string) => { success: boolean; error?: string };
+  setLineThickness: (name: string, thickness: number) => { success: boolean; error?: string };
+  exportXML: () => string;
+  importXML: (xml: string) => boolean;
 }
 
 interface GeoGebraBoardProps {
@@ -18,14 +38,86 @@ export const GeoGebraBoard = forwardRef<
   GeoGebraBoardHandle,
   GeoGebraBoardProps
 >(function GeoGebraBoard({ className, appName = "graphing" }, ref) {
-  const { isReady, loadError, evalCommand, reset, ggbRef, containerId } =
-    useGgbApplet({ appName });
+  const {
+    isReady,
+    loadError,
+    evalCommand,
+    reset,
+    getBoardState,
+    deleteObject,
+    undo,
+    getSelectedObjects,
+    setValue,
+    setVisible,
+    startAnimation,
+    stopAnimation,
+    setAnimating,
+    setAnimationSpeed,
+    setShowGrid,
+    setShowAxes,
+    setActive,
+    setPointSize,
+    setColor,
+    setCaption,
+    setConditionToShowObject,
+    setLineThickness,
+    exportXML,
+    importXML,
+    ggbRef,
+    containerId,
+  } = useGgbApplet({ appName });
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useImperativeHandle(
     ref,
-    () => ({ evalCommand, reset }),
-    [evalCommand, reset],
+    () => ({
+      evalCommand,
+      reset,
+      getBoardState,
+      deleteObject,
+      undo,
+      getSelectedObjects,
+      setValue,
+      setVisible,
+      startAnimation,
+      stopAnimation,
+      setAnimating,
+      setAnimationSpeed,
+      setShowGrid,
+      setShowAxes,
+      setActive,
+      setPointSize,
+      setColor,
+      setCaption,
+      setConditionToShowObject,
+      setLineThickness,
+      exportXML,
+      importXML,
+    }),
+    [
+      evalCommand,
+      reset,
+      getBoardState,
+      deleteObject,
+      undo,
+      getSelectedObjects,
+      setValue,
+      setVisible,
+      startAnimation,
+      stopAnimation,
+      setAnimating,
+      setAnimationSpeed,
+      setShowGrid,
+      setShowAxes,
+      setActive,
+      setPointSize,
+      setColor,
+      setCaption,
+      setConditionToShowObject,
+      setLineThickness,
+      exportXML,
+      importXML,
+    ],
   );
 
   useEffect(() => {
