@@ -114,21 +114,21 @@ export function createGgbTools(board: BoardAPI) {
           return { object: obj };
         }),
     },
-    set_viewport: {
-      description: "调整 GeoGebra 画板的坐标系可视范围。分别设置 x 轴和 y 轴的最小/最大值来控制显示区域，确保图形完整显示在画布中。",
-      inputSchema: z.object({
-        xMin: z.number().describe("x 轴最小值"),
-        xMax: z.number().describe("x 轴最大值"),
-        yMin: z.number().describe("y 轴最小值"),
-        yMax: z.number().describe("y 轴最大值"),
-      }),
-      execute: async ({ xMin, xMax, yMin, yMax }: { xMin: number; xMax: number; yMin: number; yMax: number }) =>
-        logToolCallAsync("set_viewport", { xMin, xMax, yMin, yMax }, async () => {
-          const res = board.setCoordSystem(xMin, xMax, yMin, yMax);
-          if (!res.success) return res;
-          return { success: true, viewport: { xMin, xMax, yMin, yMax } };
-        }),
-    },
+    // set_viewport: {
+    //   description: "调整 GeoGebra 画板的坐标系可视范围。分别设置 x 轴和 y 轴的最小/最大值来控制显示区域，确保图形完整显示在画布中。",
+    //   inputSchema: z.object({
+    //     xMin: z.number().describe("x 轴最小值"),
+    //     xMax: z.number().describe("x 轴最大值"),
+    //     yMin: z.number().describe("y 轴最小值"),
+    //     yMax: z.number().describe("y 轴最大值"),
+    //   }),
+    //   execute: async ({ xMin, xMax, yMin, yMax }: { xMin: number; xMax: number; yMin: number; yMax: number }) =>
+    //     logToolCallAsync("set_viewport", { xMin, xMax, yMin, yMax }, async () => {
+    //       const res = board.setCoordSystem(xMin, xMax, yMin, yMax);
+    //       if (!res.success) return res;
+    //       return { success: true, viewport: { xMin, xMax, yMin, yMax } };
+    //     }),
+    // },
     clear_canvas: {
       description: "清空 GeoGebra 画板上的所有对象，恢复到初始空白状态。仅在用户明确要求清空时使用。",
       inputSchema: z.object({}),

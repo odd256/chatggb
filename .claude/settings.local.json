@@ -26,7 +26,9 @@
       "Bash(Remove-Item *)",
       "WebFetch(domain:ai-sdk.dev)",
       "Bash(Get-ChildItem -Directory \"D:\\\\projects\\\\easy_project\\\\chat_ggb\\\\src\")",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "PowerShell(Get-Content *)",
+      "PowerShell([System.IO.File]::ReadAllText\\(\"D:\\\\projects\\\\easy_project\\\\chat_ggb\\\\src\\\\agent\\\\prompts.ts\", [System.Text.Encoding]::UTF8\\).Split\\(\"`n\"\\)[30])"
     ]
   }
 }

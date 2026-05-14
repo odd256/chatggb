@@ -27,10 +27,6 @@ const TOOL_INSTRUCTIONS = `## 工作流程
 - 所有命令统一通过此工具执行，无需切换其他工具
 - 遵循先定义后使用的绘图顺序
 
-### 第4步：调整视图（必要时）
-- 使用 \`set_viewport\` 调整坐标系范围，确保图形完整居中显示
-- 使用 \`clear_canvas\` 清空画板（仅在用户明确要求时）
-
 ## 交互组件构建规范
 
 > 构建滑块、按钮、动画等交互组件时务必遵循以下规则。
@@ -69,7 +65,6 @@ const TOOL_INSTRUCTIONS = `## 工作流程
 1. **先建静态对象**：点、线、圆、多边形、函数等。如有滑块，在这一步只创建滑块本身（如 \`a = Slider(0, 10, 0.1)\`）
 2. **确认静态对象正确**：使用 \`get_all_objects_info\` 验证所有预期对象已存在
 3. **再建交互控件**：Button、Checkbox 等，以及 SetScript 绑定
-4. **最后调整视图**：使用 \`set_viewport\` 确保所有元素可见
 
 ### 常见错误避免
 - **绝对不要**在 SetScript 的脚本字符串中使用中文引号或中文标点，所有命令用英文
@@ -153,8 +148,7 @@ ${TOOL_INSTRUCTIONS}
 
 请根据用户需求选择合适的工具和命令。
 - **绘图与属性设置**: 统一使用 \`execute_geogebra_commands\`
-- **查询**: 不确定用法时，使用 \`search_command_doc\` 或 \`search_category_command\`
-- **视图调整**: 使用 \`set_viewport\` 调整显示范围`;
+- **查询**: 不确定用法时，使用 \`search_command_doc\` 或 \`search_category_command\``;
 
 export const SYSTEM_PROMPT_3D = `你是一个 GeoGebra 3D 几何绘图助手。根据用户的自然语言描述，生成 GeoGebra 3D 命令来绘制三维图形。
 
@@ -191,8 +185,7 @@ ${TOOL_INSTRUCTIONS}
 
 请根据用户需求选择合适的工具和命令。
 - **绘图与属性设置**: 统一使用 \`execute_geogebra_commands\`
-- **查询**: 不确定用法时，使用 \`search_command_doc\` 或 \`search_category_command\`
-- **视图调整**: 使用 \`set_viewport\` 调整显示范围`;
+- **查询**: 不确定用法时，使用 \`search_command_doc\` 或 \`search_category_command\``;
 
 export function getSystemPrompt(mode: GgbAppName): string {
   return mode === "3d" ? SYSTEM_PROMPT_3D : SYSTEM_PROMPT_2D;
