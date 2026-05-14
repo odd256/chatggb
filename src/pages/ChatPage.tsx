@@ -40,140 +40,9 @@ export function ChatPage({ onOpenSettings }: ChatPageProps) {
     [boardRef],
   );
 
-  const deleteObject = useCallback(
-    (name: string) =>
-      boardRef.current?.deleteObject(name) ?? {
-        success: false,
-        error: "Board not initialized",
-      },
-    [boardRef],
-  );
-
-  const getSelectedObjects = useCallback(
-    () => boardRef.current?.getSelectedObjects() ?? [],
-    [boardRef],
-  );
-
-  const setValue = useCallback(
-    (name: string, value: number) =>
-      boardRef.current?.setValue(name, value) ?? {
-        success: false,
-        error: "Board not initialized",
-      },
-    [boardRef],
-  );
-
-  const setVisible = useCallback(
-    (name: string, visible: boolean) =>
-      boardRef.current?.setVisible(name, visible) ?? {
-        success: false,
-        error: "Board not initialized",
-      },
-    [boardRef],
-  );
-
-  const startAnimation = useCallback(
-    () =>
-      boardRef.current?.startAnimation() ?? {
-        success: false,
-        error: "Board not initialized",
-      },
-    [boardRef],
-  );
-
-  const stopAnimation = useCallback(
-    () =>
-      boardRef.current?.stopAnimation() ?? {
-        success: false,
-        error: "Board not initialized",
-      },
-    [boardRef],
-  );
-
-  const setAnimating = useCallback(
-    (name: string, animating: boolean) =>
-      boardRef.current?.setAnimating(name, animating) ?? {
-        success: false,
-        error: "Board not initialized",
-      },
-    [boardRef],
-  );
-
-  const setAnimationSpeed = useCallback(
-    (name: string, speed: number) =>
-      boardRef.current?.setAnimationSpeed(name, speed) ?? {
-        success: false,
-        error: "Board not initialized",
-      },
-    [boardRef],
-  );
-
-  const setShowGrid = useCallback(
-    (visible: boolean) =>
-      boardRef.current?.setShowGrid(visible) ?? {
-        success: false,
-        error: "Board not initialized",
-      },
-    [boardRef],
-  );
-
-  const setShowAxes = useCallback(
-    (visible: boolean) =>
-      boardRef.current?.setShowAxes(visible) ?? {
-        success: false,
-        error: "Board not initialized",
-      },
-    [boardRef],
-  );
-
-  const setActive = useCallback(
-    (name: string, active: boolean) =>
-      boardRef.current?.setActive(name, active) ?? {
-        success: false,
-        error: "Board not initialized",
-      },
-    [boardRef],
-  );
-
-  const setPointSize = useCallback(
-    (name: string, size: number) =>
-      boardRef.current?.setPointSize(name, size) ?? {
-        success: false,
-        error: "Board not initialized",
-      },
-    [boardRef],
-  );
-
-  const setColor = useCallback(
-    (name: string, r: number, g: number, b: number) =>
-      boardRef.current?.setColor(name, r, g, b) ?? {
-        success: false,
-        error: "Board not initialized",
-      },
-    [boardRef],
-  );
-
-  const setCaption = useCallback(
-    (name: string, caption: string) =>
-      boardRef.current?.setCaption(name, caption) ?? {
-        success: false,
-        error: "Board not initialized",
-      },
-    [boardRef],
-  );
-
-  const setConditionToShowObject = useCallback(
-    (name: string, condition: string) =>
-      boardRef.current?.setConditionToShowObject(name, condition) ?? {
-        success: false,
-        error: "Board not initialized",
-      },
-    [boardRef],
-  );
-
-  const setLineThickness = useCallback(
-    (name: string, thickness: number) =>
-      boardRef.current?.setLineThickness(name, thickness) ?? {
+  const setCoordSystem = useCallback(
+    (xMin: number, xMax: number, yMin: number, yMax: number) =>
+      boardRef.current?.setCoordSystem(xMin, xMax, yMin, yMax) ?? {
         success: false,
         error: "Board not initialized",
       },
@@ -195,23 +64,8 @@ export function ChatPage({ onOpenSettings }: ChatPageProps) {
     () => ({
       evalCommand,
       getBoardState,
-      deleteObject,
       resetCanvas,
-      getSelectedObjects,
-      setValue,
-      setVisible,
-      startAnimation,
-      stopAnimation,
-      setAnimating,
-      setAnimationSpeed,
-      setShowGrid,
-      setShowAxes,
-      setActive,
-      setPointSize,
-      setColor,
-      setCaption,
-      setConditionToShowObject,
-      setLineThickness,
+      setCoordSystem,
       exportXML,
       importXML,
       mode: appMode,
@@ -219,23 +73,8 @@ export function ChatPage({ onOpenSettings }: ChatPageProps) {
     [
       evalCommand,
       getBoardState,
-      deleteObject,
       resetCanvas,
-      getSelectedObjects,
-      setValue,
-      setVisible,
-      startAnimation,
-      stopAnimation,
-      setAnimating,
-      setAnimationSpeed,
-      setShowGrid,
-      setShowAxes,
-      setActive,
-      setPointSize,
-      setColor,
-      setCaption,
-      setConditionToShowObject,
-      setLineThickness,
+      setCoordSystem,
       exportXML,
       importXML,
       appMode,

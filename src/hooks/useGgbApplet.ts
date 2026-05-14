@@ -442,6 +442,21 @@ export function useGgbApplet({ appName = "graphing" }: UseGgbAppletOptions = {})
     }
   }, []);
 
+  const setCoordSystem = useCallback(
+    (xMin: number, xMax: number, yMin: number, yMax: number): { success: boolean; error?: string } => {
+      if (!ggbRef.current) {
+        return { success: false, error: "GeoGebra 尚未就绪" };
+      }
+      try {
+        ggbRef.current.setCoordSystem(xMin, xMax, yMin, yMax);
+        return { success: true };
+      } catch (e: any) {
+        return { success: false, error: e.message || String(e) };
+      }
+    },
+    [],
+  );
+
   const exportXML = useCallback((): string => {
     if (!ggbRef.current) return "";
     try {
@@ -484,6 +499,7 @@ export function useGgbApplet({ appName = "graphing" }: UseGgbAppletOptions = {})
     setCaption,
     setConditionToShowObject,
     setLineThickness,
+    setCoordSystem,
     exportXML,
     importXML,
     ggbRef,

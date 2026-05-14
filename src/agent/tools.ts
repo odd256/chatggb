@@ -20,7 +20,7 @@ function logEvalResults(explanation: string, results: EvalResult[]) {
   const failed = results.filter((r) => !r.success);
   if (failed.length > 0) {
     console.log(
-      `%c[evalCommand] ${explanation} — ${failed.length}/${results.length} 条命令失败`,
+      `%c[execute_geogebra_commands] ${explanation} — ${failed.length}/${results.length} 条命令失败`,
       "color: #ef4444; font-weight: bold",
     );
     for (const r of failed) {
@@ -28,7 +28,7 @@ function logEvalResults(explanation: string, results: EvalResult[]) {
     }
   } else {
     console.log(
-      `%c[evalCommand] ${explanation} — 全部 ${results.length} 条命令成功`,
+      `%c[execute_geogebra_commands] ${explanation} — 全部 ${results.length} 条命令成功`,
       "color: #22c55e",
     );
   }
@@ -40,14 +40,15 @@ function logEvalResults(explanation: string, results: EvalResult[]) {
 
 export function createGgbTools(board: BoardAPI) {
   return {
-    evalCommand: {
-      description: "执行一组 GeoGebra 命令以在画板上绘制图形",
+    execute_geogebra_commands: {
+      description:
+        "执行一组 GeoGebra 命令以在画板上进行各种操作。支持所有合法的 GeoGebra Script 命令，包括：绘图命令（A = (1,2), Segment(A,B), Circle(O,1)）、属性设置（SetColor(A,255,0,0), SetVisible(A,true), SetPointSize(A,5)）、动画控制（StartAnimation(A,true), SetValue(slider,5)）、显示控制（ShowGrid(true), ShowAxes(true)）、删除（Delete(A)）、条件可见性（SetConditionToShowObject(circle1, step >= 1)）。所有命令都统一通过此工具执行。",
       inputSchema: z.object({
-        explanation: z.string().describe("中文简要描述你绘制的内容"),
-        commands: z.array(z.string()).describe("GeoGebra 命令数组，按执行顺序排列"),
+        explanation: z.string().describe("中文简要描述你当前执行的操作目的"),
+        commands: z.array(z.string()).describe("GeoGebra 命令数组，按执行顺序排列。支持所有 GeoGebra Script 命令"),
       }),
       execute: async ({ commands, explanation }: { commands: string[]; explanation: string }) => {
-        return logToolCallAsync("evalCommand", { explanation, commands }, async () => {
+        return logToolCallAsync("execute_geogebra_commands", { explanation, commands }, async () => {
           const results: EvalResult[] = [];
           for (const cmd of commands) {
             const trimmed = cmd.trim();
@@ -63,163 +64,62 @@ export function createGgbTools(board: BoardAPI) {
         });
       },
     },
-    getBoardState: {
-      description: "获取当前 GeoGebra 画板上所有的几何元素及其定义和当前值",
+    get_all_objects_info: {
+      description: "获取当前 GeoGebra 画板上所有几何元素的名称、类型、定义和当前值。在执行绘图操作前应首先调用此工具了解画板当前状态。",
       inputSchema: z.object({}),
-      execute: async () => logToolCallAsync("getBoardState", {}, async () => {
-        const objects = board.getBoardState();
-        return { objects };
-      }),
+      execute: async () =>
+        logToolCallAsync("get_all_objects_info", {}, async () => {
+          const objects = board.getBoardState();
+          return { objects };
+        }),
     },
-    deleteObject: {
-      description: "从 GeoGebra 画板中删除指定的几何对象",
+    get_object_value: {
+      description: "通过名称获取单个 GeoGebra 对象的详细信息（类型、定义、当前值）。当用户询问特定对象的坐标、面积等数值时使用。",
       inputSchema: z.object({
-        name: z.string().describe("要删除的对象名称（如 A, eq1, poly1 等）"),
+        name: z.string().describe("要查询的对象名称，如 A, eq1, poly1, slider1 等"),
       }),
       execute: async ({ name }: { name: string }) =>
-        logToolCallAsync("deleteObject", { name }, async () => board.deleteObject(name)),
+        logToolCallAsync("get_object_value", { name }, async () => {
+          const objects = board.getBoardState();
+          const obj = objects.find((o: any) => o.name === name);
+          if (!obj) {
+            return { error: `对象 "${name}" 不存在` };
+          }
+          return { object: obj };
+        }),
     },
-    resetCanvas: {
-      description: "将 GeoGebra 画板重置到初始空白状态，删除所有已有的对象",
+    set_viewport: {
+      description: "调整 GeoGebra 画板的坐标系可视范围。分别设置 x 轴和 y 轴的最小/最大值来控制显示区域，确保图形完整显示在画布中。",
+      inputSchema: z.object({
+        xMin: z.number().describe("x 轴最小值"),
+        xMax: z.number().describe("x 轴最大值"),
+        yMin: z.number().describe("y 轴最小值"),
+        yMax: z.number().describe("y 轴最大值"),
+      }),
+      execute: async ({ xMin, xMax, yMin, yMax }: { xMin: number; xMax: number; yMin: number; yMax: number }) =>
+        logToolCallAsync("set_viewport", { xMin, xMax, yMin, yMax }, async () => {
+          const res = board.setCoordSystem(xMin, xMax, yMin, yMax);
+          if (!res.success) return res;
+          return { success: true, viewport: { xMin, xMax, yMin, yMax } };
+        }),
+    },
+    clear_canvas: {
+      description: "清空 GeoGebra 画板上的所有对象，恢复到初始空白状态。仅在用户明确要求清空时使用。",
       inputSchema: z.object({}),
-      execute: async () => logToolCallAsync("resetCanvas", {}, async () => {
-        board.resetCanvas();
-        return { success: true };
-      }),
+      execute: async () =>
+        logToolCallAsync("clear_canvas", {}, async () => {
+          board.resetCanvas();
+          return { success: true };
+        }),
     },
-    getSelectedObjects: {
-      description: "获取当前用户在 GeoGebra 画板中选中的几何对象的标签（名称）列表",
-      inputSchema: z.object({}),
-      execute: async () => logToolCallAsync("getSelectedObjects", {}, async () => {
-        const objects = board.getSelectedObjects();
-        return { objects };
-      }),
-    },
-    setValue: {
-      description: "设置 GeoGebra 对象（如滑块、数字、点等）的数值",
-      inputSchema: z.object({
-        name: z.string().describe("对象名称"),
-        value: z.number().describe("要设置的数值"),
-      }),
-      execute: async ({ name, value }: { name: string; value: number }) =>
-        logToolCallAsync("setValue", { name, value }, async () => board.setValue(name, value)),
-    },
-    setVisible: {
-      description: "设置 GeoGebra 对象的可见性（显示或隐藏）",
-      inputSchema: z.object({
-        name: z.string().describe("对象名称"),
-        visible: z.boolean().describe("是否可见"),
-      }),
-      execute: async ({ name, visible }: { name: string; visible: boolean }) =>
-        logToolCallAsync("setVisible", { name, visible }, async () => board.setVisible(name, visible)),
-    },
-    startAnimation: {
-      description: "开始播放画板上的动画。注意：只有被设置为 'animating' 状态的对象才会移动。",
-      inputSchema: z.object({}),
-      execute: async () => logToolCallAsync("startAnimation", {}, async () => board.startAnimation()),
-    },
-    stopAnimation: {
-      description: "停止播放画板上的所有动画。",
-      inputSchema: z.object({}),
-      execute: async () => logToolCallAsync("stopAnimation", {}, async () => board.stopAnimation()),
-    },
-    setAnimating: {
-      description: "设置某个对象是否参与动画。设为 true 后，当全局动画开始时该对象将自动移动（如滑块、点等）。",
-      inputSchema: z.object({
-        name: z.string().describe("对象名称"),
-        animating: z.boolean().describe("是否开启该对象的动画属性"),
-      }),
-      execute: async ({ name, animating }: { name: string; animating: boolean }) =>
-        logToolCallAsync("setAnimating", { name, animating }, async () => board.setAnimating(name, animating)),
-    },
-    setAnimationSpeed: {
-      description: "设置某个对象的动画速度。注意：动画速度最好在创建 Slider 时通过 Speed 参数设定，此工具为运行时修改的备选方案。",
-      inputSchema: z.object({
-        name: z.string().describe("对象名称"),
-        speed: z.number().describe("动画速度（如 1.0 为正常速度）"),
-      }),
-      execute: async ({ name, speed }: { name: string; speed: number }) =>
-        logToolCallAsync("setAnimationSpeed", { name, speed }, async () => board.setAnimationSpeed(name, speed)),
-    },
-    setShowGrid: {
-      description: "设置 GeoGebra 画板网格的显示或隐藏",
-      inputSchema: z.object({
-        visible: z.boolean().describe("是否显示网格"),
-      }),
-      execute: async ({ visible }: { visible: boolean }) =>
-        logToolCallAsync("setShowGrid", { visible }, async () => board.setShowGrid(visible)),
-    },
-    setShowAxes: {
-      description: "设置 GeoGebra 画板坐标轴的显示或隐藏",
-      inputSchema: z.object({
-        visible: z.boolean().describe("是否显示坐标轴"),
-      }),
-      execute: async ({ visible }: { visible: boolean }) =>
-        logToolCallAsync("setShowAxes", { visible }, async () => board.setShowAxes(visible)),
-    },
-    setActive: {
-      description: "设置 GeoGebra 对象是否处于激活状态。非激活状态的滑块不可拖动。",
-      inputSchema: z.object({
-        name: z.string().describe("对象名称"),
-        active: z.boolean().describe("是否激活"),
-      }),
-      execute: async ({ name, active }: { name: string; active: boolean }) =>
-        logToolCallAsync("setActive", { name, active }, async () => board.setActive(name, active)),
-    },
-    setPointSize: {
-      description: "设置 GeoGebra 点对象的显示大小",
-      inputSchema: z.object({
-        name: z.string().describe("点对象名称"),
-        size: z.number().describe("点的大小（1-9）"),
-      }),
-      execute: async ({ name, size }: { name: string; size: number }) =>
-        logToolCallAsync("setPointSize", { name, size }, async () => board.setPointSize(name, size)),
-    },
-    setColor: {
-      description: "设置 GeoGebra 对象的颜色",
-      inputSchema: z.object({
-        name: z.string().describe("对象名称"),
-        r: z.number().describe("红色分量 (0-255)"),
-        g: z.number().describe("绿色分量 (0-255)"),
-        b: z.number().describe("蓝色分量 (0-255)"),
-      }),
-      execute: async ({ name, r, g, b }: { name: string; r: number; g: number; b: number }) =>
-        logToolCallAsync("setColor", { name, r, g, b }, async () => board.setColor(name, r, g, b)),
-    },
-    setCaption: {
-      description: "设置 GeoGebra 对象的文本标签（caption）",
-      inputSchema: z.object({
-        name: z.string().describe("对象名称"),
-        caption: z.string().describe("标签文本"),
-      }),
-      execute: async ({ name, caption }: { name: string; caption: string }) =>
-        logToolCallAsync("setCaption", { name, caption }, async () => board.setCaption(name, caption)),
-    },
-    setConditionToShowObject: {
-      description: "设置 GeoGebra 对象的条件可见性。当条件表达式求值为 true 时对象可见，否则隐藏。例如：setConditionToShowObject('circle1', 'step >= 1')",
-      inputSchema: z.object({
-        name: z.string().describe("对象名称"),
-        condition: z.string().describe("条件表达式，如 'step >= 1'"),
-      }),
-      execute: async ({ name, condition }: { name: string; condition: string }) =>
-        logToolCallAsync("setConditionToShowObject", { name, condition }, async () => board.setConditionToShowObject(name, condition)),
-    },
-    setLineThickness: {
-      description: "设置 GeoGebra 对象的线条粗细",
-      inputSchema: z.object({
-        name: z.string().describe("对象名称"),
-        thickness: z.number().describe("线条粗细（1-13）"),
-      }),
-      execute: async ({ name, thickness }: { name: string; thickness: number }) =>
-        logToolCallAsync("setLineThickness", { name, thickness }, async () => board.setLineThickness(name, thickness)),
-    },
-    searchCategoryCommand: {
-      description: "检索属于某个特定分类的所有 GeoGebra 命令名称列表。可用的分类包括：3D_Commands, Algebra_Commands, Chart_Commands, Conic_Commands, Discrete_Math_Commands, Functions_and_Calculus_Commands, Geometry_Commands, GeoGebra_Commands, List_Commands, Logic_Commands, Optimization_Commands, Probability_Commands, Scripting_Commands, Spreadsheet_Commands, Statistics_Commands, Financial_Commands, Text_Commands, Transformation_Commands, Vector_and_Matrix_Commands, CAS_Specific_Commands",
+    search_category_command: {
+      description:
+        "检索属于某个特定分类的所有 GeoGebra 命令名称列表。可用的分类包括：3D_Commands, Algebra_Commands, Chart_Commands, Conic_Commands, Discrete_Math_Commands, Functions_and_Calculus_Commands, Geometry_Commands, GeoGebra_Commands, List_Commands, Logic_Commands, Optimization_Commands, Probability_Commands, Scripting_Commands, Spreadsheet_Commands, Statistics_Commands, Financial_Commands, Text_Commands, Transformation_Commands, Vector_and_Matrix_Commands, CAS_Specific_Commands",
       inputSchema: z.object({
         category: z.string().describe("分类名称，例如 'Geometry_Commands'"),
       }),
       execute: async ({ category }: { category: string }) =>
-        logToolCallAsync("searchCategoryCommand", { category }, async () => {
+        logToolCallAsync("search_category_command", { category }, async () => {
           const categories = (commandsData as any).categories;
           if (!categories[category]) {
             return { error: `未找到该分类: ${category}。请确保使用了上方描述中列出的精确分类名称。` };
@@ -227,15 +127,16 @@ export function createGgbTools(board: BoardAPI) {
           return { commands: categories[category] };
         }),
     },
-    searchCommandDoc: {
-      description: "检索某个具体 GeoGebra 命令的详细文档（包含命令签名、参数说明和使用样例）。在尝试使用复杂的 GeoGebra 命令前，请通过此工具获取准确的用法。",
+    search_command_doc: {
+      description:
+        "检索某个具体 GeoGebra 命令的详细文档（包含命令签名、参数说明和使用样例）。在尝试使用不熟悉的 GeoGebra 命令前，请通过此工具获取准确的用法。",
       inputSchema: z.object({
         commandName: z.string().describe("具体的命令名称，例如 'Angle', 'FitLine', 'Intersect'"),
       }),
       execute: async ({ commandName }: { commandName: string }) =>
-        logToolCallAsync("searchCommandDoc", { commandName }, async () => {
+        logToolCallAsync("search_command_doc", { commandName }, async () => {
           const docs = (commandsData as any).docs;
-          const exactKey = Object.keys(docs).find(k => k.toLowerCase() === commandName.toLowerCase());
+          const exactKey = Object.keys(docs).find((k) => k.toLowerCase() === commandName.toLowerCase());
           if (!exactKey) {
             return { error: `未找到命令: ${commandName}` };
           }

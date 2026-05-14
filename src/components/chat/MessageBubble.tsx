@@ -66,7 +66,7 @@ export function MessageBubble({
       {groupedToolParts?.map((toolInvocation) => {
         const { toolName, toolCallId, state } = toolInvocation;
 
-        if (toolName === "evalCommand") {
+        if (toolName === "execute_geogebra_commands" || toolName === "evalCommand") {
           return (
             <div key={toolCallId} className="flex flex-col gap-2 max-w-[90%]">
               {state === "result" && toolInvocation.result?.explanation && (
