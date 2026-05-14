@@ -248,16 +248,6 @@ export function useGgbApplet({ appName = "graphing" }: UseGgbAppletOptions = {})
     }
   }, []);
 
-  const undo = useCallback(() => {
-    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
-    try {
-      ggbRef.current.undo();
-      return { success: true };
-    } catch (e: any) {
-      return { success: false, error: e.message || String(e) };
-    }
-  }, []);
-
   const getSelectedObjects = useCallback(() => {
     if (!ggbRef.current) return [];
     try {
@@ -479,7 +469,6 @@ export function useGgbApplet({ appName = "graphing" }: UseGgbAppletOptions = {})
     reset,
     getBoardState,
     deleteObject,
-    undo,
     getSelectedObjects,
     setValue,
     setVisible,

@@ -87,16 +87,6 @@ export function createGgbTools(board: BoardAPI) {
         return { success: true };
       }),
     },
-    undo: {
-      description: "在 GeoGebra 画板中执行撤销（Undo）一步操作，恢复到上一个状态",
-      inputSchema: z.object({}),
-      execute: async () => logToolCallAsync("undo", {}, async () => board.undo()),
-    },
-    redo: {
-      description: "重做上一步被撤销的操作",
-      inputSchema: z.object({}),
-      execute: async () => logToolCallAsync("redo", {}, async () => board.redo()),
-    },
     getSelectedObjects: {
       description: "获取当前用户在 GeoGebra 画板中选中的几何对象的标签（名称）列表",
       inputSchema: z.object({}),

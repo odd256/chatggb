@@ -13,7 +13,6 @@ interface ChatSessionProps {
 
 export interface ChatSessionHandle {
   sendMessage: (text: string) => void;
-  setMessages: (messages: UIMessage[] | ((prev: UIMessage[]) => UIMessage[])) => void;
 }
 
 export const ChatSession = forwardRef<ChatSessionHandle, ChatSessionProps>(
@@ -21,7 +20,7 @@ export const ChatSession = forwardRef<ChatSessionHandle, ChatSessionProps>(
     { transport, initialMessages, onInputConsumed, onLoadingChange, onMessagesChange },
     ref,
   ) {
-    const { messages, sendMessage, setMessages, status } = useChat({
+    const { messages, sendMessage, status } = useChat({
       transport,
       messages: initialMessages,
       onError: (error) => {
@@ -46,9 +45,8 @@ export const ChatSession = forwardRef<ChatSessionHandle, ChatSessionProps>(
           sendMessage({ text });
           onInputConsumed();
         },
-        setMessages,
       }),
-      [sendMessage, onInputConsumed, setMessages],
+      [sendMessage, onInputConsumed],
     );
 
     return (

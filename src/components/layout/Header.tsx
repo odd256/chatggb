@@ -1,16 +1,12 @@
 import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Trash2, Minus, Square, X, Undo2, Redo2 } from "lucide-react";
+import { Trash2, Minus, Square, X } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 interface HeaderProps {
   onClearBoard: () => void;
-  canUndo?: boolean;
-  canRedo?: boolean;
-  onUndo?: () => void;
-  onRedo?: () => void;
 }
 
-export function Header({ onClearBoard, canUndo, canRedo, onUndo, onRedo }: HeaderProps) {
+export function Header({ onClearBoard }: HeaderProps) {
   const handleMinimize = useCallback(() => {
     getCurrentWindow().minimize();
   }, []);
@@ -34,28 +30,6 @@ export function Header({ onClearBoard, canUndo, canRedo, onUndo, onRedo }: Heade
 
       <div className="flex items-center">
         <div data-tauri-drag-region="false" className="flex items-center gap-0.5 mr-1">
-          {onUndo && onRedo && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={onUndo}
-                disabled={!canUndo}
-                title="撤销"
-              >
-                <Undo2 />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={onRedo}
-                disabled={!canRedo}
-                title="重做"
-              >
-                <Redo2 />
-              </Button>
-            </>
-          )}
           <Button
             variant="ghost"
             size="icon-sm"

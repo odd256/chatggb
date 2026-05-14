@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import { Header } from "@/components/layout/Header";
-import { ChatPanel, type ChatPanelHandle } from "@/components/chat/ChatPanel";
+import { ChatPanel } from "@/components/chat/ChatPanel";
 import {
   GeoGebraBoard,
   type GeoGebraBoardHandle,
@@ -17,8 +17,6 @@ export function ChatPage({ onOpenSettings }: ChatPageProps) {
   const [appMode, setAppMode] = useState<GgbAppName>("graphing");
   const board2dRef = useRef<GeoGebraBoardHandle>(null);
   const board3dRef = useRef<GeoGebraBoardHandle>(null);
-  const chatPanelRef = useRef<ChatPanelHandle>(null);
-  const [canUndo, setCanUndo] = useState(false);
 
   const boardRef = appMode === "graphing" ? board2dRef : board3dRef;
 
@@ -49,20 +47,6 @@ export function ChatPage({ onOpenSettings }: ChatPageProps) {
         error: "Board not initialized",
       },
     [boardRef],
-  );
-
-  const undo = useCallback(
-    () =>
-      boardRef.current?.undo() ?? {
-        success: false,
-        error: "Board not initialized",
-      },
-    [boardRef],
-  );
-
-  const redo = useCallback(
-    () => ({ success: false, error: "Redo not implemented" }),
-    [],
   );
 
   const getSelectedObjects = useCallback(
@@ -213,8 +197,6 @@ export function ChatPage({ onOpenSettings }: ChatPageProps) {
       getBoardState,
       deleteObject,
       resetCanvas,
-      undo,
-      redo,
       getSelectedObjects,
       setValue,
       setVisible,
@@ -239,8 +221,6 @@ export function ChatPage({ onOpenSettings }: ChatPageProps) {
       getBoardState,
       deleteObject,
       resetCanvas,
-      undo,
-      redo,
       getSelectedObjects,
       setValue,
       setVisible,
@@ -274,27 +254,17 @@ export function ChatPage({ onOpenSettings }: ChatPageProps) {
     boardRef.current?.reset();
   }, [boardRef]);
 
-  const handleChatUndo = useCallback(() => {
-    chatPanelRef.current?.undo();
-  }, []);
-
   return (
     <BoardContext.Provider value={boardAPI}>
       <div className="flex flex-col h-screen">
-        <Header
-          onClearBoard={handleClearBoard}
-          canUndo={canUndo}
-          onUndo={handleChatUndo}
-        />
+        <Header onClearBoard={handleClearBoard} />
         <div className="flex flex-1 min-h-0">
           <Sidebar appMode={appMode} />
           <div className="w-[30%] min-w-[300px] border-r">
             <ChatPanel
-              ref={chatPanelRef}
               onOpenSettings={onOpenSettings}
               appMode={appMode}
               onToggleMode={handleToggleMode}
-              onCanUndoChange={setCanUndo}
             />
           </div>
           <div className="flex-1 relative">

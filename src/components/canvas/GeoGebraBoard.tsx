@@ -8,7 +8,6 @@ export interface GeoGebraBoardHandle {
   reset: () => void;
   getBoardState: () => any[];
   deleteObject: (name: string) => { success: boolean; error?: string };
-  undo: () => { success: boolean; error?: string };
   getSelectedObjects: () => string[];
   setValue: (name: string, value: number) => { success: boolean; error?: string };
   setVisible: (name: string, visible: boolean) => { success: boolean; error?: string };
@@ -45,7 +44,6 @@ export const GeoGebraBoard = forwardRef<
     reset,
     getBoardState,
     deleteObject,
-    undo,
     getSelectedObjects,
     setValue,
     setVisible,
@@ -75,7 +73,6 @@ export const GeoGebraBoard = forwardRef<
       reset,
       getBoardState,
       deleteObject,
-      undo,
       getSelectedObjects,
       setValue,
       setVisible,
@@ -99,7 +96,6 @@ export const GeoGebraBoard = forwardRef<
       reset,
       getBoardState,
       deleteObject,
-      undo,
       getSelectedObjects,
       setValue,
       setVisible,

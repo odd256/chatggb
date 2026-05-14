@@ -10,8 +10,6 @@ export interface BoardAPI {
   getBoardState: () => any[];
   deleteObject: (name: string) => { success: boolean; error?: string };
   resetCanvas: () => void;
-  undo: () => { success: boolean; error?: string };
-  redo: () => { success: boolean; error?: string };
   getSelectedObjects: () => string[];
   setValue: (name: string, value: number) => { success: boolean; error?: string };
   setVisible: (name: string, visible: boolean) => { success: boolean; error?: string };
