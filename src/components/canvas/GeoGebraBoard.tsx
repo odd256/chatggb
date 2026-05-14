@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 
 export interface GeoGebraBoardHandle {
   evalCommand: (cmd: string) => { success: boolean; error?: string };
+  evalCommandGetLabels: (cmd: string) => { success: boolean; error?: string; labels?: string[] };
+  setUndoPoint: () => { success: boolean; error?: string };
+  undo: () => { success: boolean; error?: string };
   reset: () => void;
   getBoardState: () => any[];
   setCoordSystem: (xMin: number, xMax: number, yMin: number, yMax: number) => { success: boolean; error?: string };
@@ -26,6 +29,9 @@ export const GeoGebraBoard = forwardRef<
     isReady,
     loadError,
     evalCommand,
+    evalCommandGetLabels,
+    setUndoPoint,
+    undo,
     reset,
     getBoardState,
     setCoordSystem,
@@ -40,6 +46,9 @@ export const GeoGebraBoard = forwardRef<
     ref,
     () => ({
       evalCommand,
+      evalCommandGetLabels,
+      setUndoPoint,
+      undo,
       reset,
       getBoardState,
       setCoordSystem,
@@ -48,6 +57,9 @@ export const GeoGebraBoard = forwardRef<
     }),
     [
       evalCommand,
+      evalCommandGetLabels,
+      setUndoPoint,
+      undo,
       reset,
       getBoardState,
       setCoordSystem,

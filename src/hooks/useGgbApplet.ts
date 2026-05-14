@@ -98,6 +98,9 @@ export function useGgbApplet({ appName = "graphing" }: UseGgbAppletOptions = {})
           appletOnLoad: function (api: any) {
             if (cancelled) return;
             ggbRef.current = api || (window as any)[id] || window.ggbApplet;
+            if (typeof ggbRef.current.setErrorDialogsActive === "function") {
+              ggbRef.current.setErrorDialogsActive(false);
+            }
             setIsReady(true);
           },
         };
@@ -212,6 +215,50 @@ export function useGgbApplet({ appName = "graphing" }: UseGgbAppletOptions = {})
       }
     },
     [isReady],
+  );
+
+  const evalCommandGetLabels = useCallback(
+    (cmd: string): { success: boolean; error?: string; labels?: string[] } => {
+      if (!ggbRef.current) {
+        return { success: false, error: "GeoGebra 尚未就绪" };
+      }
+      const api = ggbRef.current;
+
+      if (typeof api.evalCommandGetLabels === "function") {
+        try {
+          const labelsStr: string = api.evalCommandGetLabels(cmd);
+          if (labelsStr) {
+            const labels = labelsStr.split(",").map((s: string) => s.trim()).filter(Boolean);
+            return { success: true, labels };
+          }
+          return { success: true, labels: [] };
+        } catch (e: any) {
+          return { success: false, error: e.message || String(e), labels: [] };
+        }
+      }
+
+      const beforeNames = new Set<string>();
+      try {
+        const count = api.getObjectNumber();
+        for (let i = 0; i < count; i++) beforeNames.add(api.getObjectName(i));
+      } catch { /* can't enumerate; execute without label tracking */ }
+
+      const result = evalCommand(cmd);
+      if (!result.success) return { ...result, labels: [] };
+
+      try {
+        const afterCount = api.getObjectNumber();
+        const newLabels: string[] = [];
+        for (let i = 0; i < afterCount; i++) {
+          const name = api.getObjectName(i);
+          if (!beforeNames.has(name)) newLabels.push(name);
+        }
+        return { success: true, labels: newLabels };
+      } catch {
+        return { success: true, labels: [] };
+      }
+    },
+    [evalCommand],
   );
 
   const reset = useCallback(() => {
@@ -457,6 +504,26 @@ export function useGgbApplet({ appName = "graphing" }: UseGgbAppletOptions = {})
     [],
   );
 
+  const setUndoPoint = useCallback((): { success: boolean; error?: string } => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      ggbRef.current.setUndoPoint();
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
+  const undo = useCallback((): { success: boolean; error?: string } => {
+    if (!ggbRef.current) return { success: false, error: "GeoGebra 尚未就绪" };
+    try {
+      ggbRef.current.undo();
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || String(e) };
+    }
+  }, []);
+
   const exportXML = useCallback((): string => {
     if (!ggbRef.current) return "";
     try {
@@ -481,6 +548,9 @@ export function useGgbApplet({ appName = "graphing" }: UseGgbAppletOptions = {})
     isReady,
     loadError,
     evalCommand,
+    evalCommandGetLabels,
+    setUndoPoint,
+    undo,
     reset,
     getBoardState,
     deleteObject,

@@ -7,6 +7,9 @@ import type { GgbAppName } from "@/hooks/useGgbApplet";
 
 export interface BoardAPI {
   evalCommand: (cmd: string) => { success: boolean; error?: string };
+  evalCommandGetLabels: (cmd: string) => { success: boolean; error?: string; labels?: string[] };
+  setUndoPoint: () => { success: boolean; error?: string };
+  undo: () => { success: boolean; error?: string };
   getBoardState: () => any[];
   resetCanvas: () => void;
   setCoordSystem: (xMin: number, xMax: number, yMin: number, yMax: number) => { success: boolean; error?: string };

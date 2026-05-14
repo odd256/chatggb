@@ -6,6 +6,7 @@ export interface EvalResult {
   command: string;
   success: boolean;
   error?: string;
+  labels?: string[];
 }
 
 function logToolCallAsync<T>(toolName: string, input: any, fn: () => Promise<T>): Promise<T> {
@@ -49,6 +50,13 @@ export function createGgbTools(board: BoardAPI) {
       }),
       execute: async ({ commands, explanation }: { commands: string[]; explanation: string }) => {
         return logToolCallAsync("execute_geogebra_commands", { explanation, commands }, async () => {
+          // Set undo point before batch for atomic rollback
+          let undoSupported = true;
+          const spResult = board.setUndoPoint();
+          if (!spResult.success) {
+            undoSupported = false;
+          }
+
           const results: EvalResult[] = [];
           for (const cmd of commands) {
             const trimmed = cmd.trim();
@@ -56,9 +64,20 @@ export function createGgbTools(board: BoardAPI) {
               results.push({ command: cmd, success: true });
               continue;
             }
-            const res = board.evalCommand(cmd);
+            const res = board.evalCommandGetLabels(cmd);
             results.push({ command: cmd, ...res });
           }
+
+          // If any command failed, rollback the entire batch
+          const failed = results.filter((r) => !r.success);
+          if (failed.length > 0 && undoSupported) {
+            console.log(
+              `%c[Rollback] ${failed.length}/${results.length} 条命令失败，正在回滚...`,
+              "color: #f59e0b; font-weight: bold",
+            );
+            board.undo();
+          }
+
           logEvalResults(explanation, results);
           return { explanation, results };
         });

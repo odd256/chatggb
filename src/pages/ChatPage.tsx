@@ -49,6 +49,33 @@ export function ChatPage({ onOpenSettings }: ChatPageProps) {
     [boardRef],
   );
 
+  const evalCommandGetLabels = useCallback(
+    (cmd: string) =>
+      boardRef.current?.evalCommandGetLabels(cmd) ?? {
+        success: false,
+        error: "Board not initialized",
+      },
+    [boardRef],
+  );
+
+  const setUndoPoint = useCallback(
+    () =>
+      boardRef.current?.setUndoPoint() ?? {
+        success: false,
+        error: "Board not initialized",
+      },
+    [boardRef],
+  );
+
+  const undo = useCallback(
+    () =>
+      boardRef.current?.undo() ?? {
+        success: false,
+        error: "Board not initialized",
+      },
+    [boardRef],
+  );
+
   const exportXML = useCallback(
     () => boardRef.current?.exportXML() ?? "",
     [boardRef],
@@ -63,6 +90,9 @@ export function ChatPage({ onOpenSettings }: ChatPageProps) {
   const boardAPI: BoardAPI = useMemo(
     () => ({
       evalCommand,
+      evalCommandGetLabels,
+      setUndoPoint,
+      undo,
       getBoardState,
       resetCanvas,
       setCoordSystem,
@@ -72,6 +102,9 @@ export function ChatPage({ onOpenSettings }: ChatPageProps) {
     }),
     [
       evalCommand,
+      evalCommandGetLabels,
+      setUndoPoint,
+      undo,
       getBoardState,
       resetCanvas,
       setCoordSystem,
