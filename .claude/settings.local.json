@@ -22,7 +22,8 @@
       "Bash(rm \"D:\\\\projects\\\\easy_project\\\\chat_ggb\\\\src\\\\components\\\\controls\\\\HistoryControls.tsx\")",
       "Bash(rmdir \"D:\\\\projects\\\\easy_project\\\\chat_ggb\\\\src\\\\components\\\\controls\")",
       "Bash(cargo check *)",
-      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(JSON.stringify\\({deps: p.dependencies, devDeps: p.devDependencies}, null, 2\\)\\)\")"
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(JSON.stringify\\({deps: p.dependencies, devDeps: p.devDependencies}, null, 2\\)\\)\")",
+      "Bash(Remove-Item *)"
     ]
   }
 }

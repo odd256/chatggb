@@ -186,6 +186,21 @@ fn rename_conversation(app: tauri::AppHandle, id: String, title: String) -> Resu
 }
 
 #[tauri::command]
+fn get_active_conversation(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let path = app
+        .path()
+        .app_data_dir()
+        .expect("failed to resolve app data dir")
+        .join("active_conversation.json");
+    if !path.exists() {
+        return Ok(None);
+    }
+    let raw = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let data: Value = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
+    Ok(data.get("id").and_then(|v| v.as_str().map(String::from)))
+}
+
+#[tauri::command]
 fn set_active_conversation(app: tauri::AppHandle, id: Option<String>) -> Result<(), String> {
     let path = app
         .path()
@@ -211,7 +226,8 @@ pub fn run() {
             save_conversation,
             delete_conversation,
             rename_conversation,
-            set_active_conversation
+            set_active_conversation,
+            get_active_conversation
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

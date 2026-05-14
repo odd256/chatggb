@@ -14,6 +14,7 @@ import {
   deleteConversation as deleteConv,
   renameConversation as renameConv,
   setActiveConversation,
+  getActiveConversation,
   type ConversationMeta,
   type Conversation,
 } from "@/hooks/useConversations";
@@ -47,11 +48,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load conversation list on mount
+  // Load conversation list on mount and restore last active session
   useEffect(() => {
     listConversations()
-      .then((list) => {
+      .then(async (list) => {
         setConversations(list);
+        const lastId = await getActiveConversation();
+        if (lastId && list.some((c) => c.id === lastId)) {
+          try {
+            const conv = await getConversation(lastId);
+            setActiveId(lastId);
+            setActiveConversationState(conv);
+          } catch {
+            // Conversation file may have been deleted, ignore
+          }
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));

@@ -36,3 +36,7 @@ export async function renameConversation(id: string, title: string): Promise<voi
 export async function setActiveConversation(id: string | null): Promise<void> {
   await invoke("set_active_conversation", { id });
 }
+
+export async function getActiveConversation(): Promise<string | null> {
+  return invoke<string | null>("get_active_conversation");
+}
