@@ -24,7 +24,9 @@
       "Bash(cargo check *)",
       "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(JSON.stringify\\({deps: p.dependencies, devDeps: p.devDependencies}, null, 2\\)\\)\")",
       "Bash(Remove-Item *)",
-      "WebFetch(domain:ai-sdk.dev)"
+      "WebFetch(domain:ai-sdk.dev)",
+      "Bash(Get-ChildItem -Directory \"D:\\\\projects\\\\easy_project\\\\chat_ggb\\\\src\")",
+      "Bash(Select-Object Name)"
     ]
   }
 }

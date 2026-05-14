@@ -83,6 +83,7 @@ const TOOL_INSTRUCTIONS = `## 工作流程
 - 点坐标直接用小括号赋值：\`A = (1, 0)\`（不要写 \`A = Point((1, 0))\`）
 - 参数间用英文逗号分隔
 - 遵循先定义后使用的绘图顺序
+- **标签管理**：所有新创建的对象默认不显示标签。如需为核心对象（如三角形顶点、关键函数曲线、用户关注的几何体）显示标签，请使用 ShowLabel(name, true) 或 SetCaption(name, "内容") 显式开启。辅助构造线和中间点勿显示标签。
 - **execute_geogebra_commands 中的每条命令必须是合法的 GeoGebra 命令，绝对不能包含注释（如 // 或 #）**
 - **GeoGebra 命令大小写敏感**：\`Min\` 不能写成 \`min\`，\`Element\` 不能写成 \`element\`，\`Take\` 不能写成 \`take\`
 - **Segment 不能直接使用 Sequence 的索引元素**：\`pts = Sequence(...)\` 后，\`Segment(pts(k), ...)\` 会失败。正确做法：
@@ -146,7 +147,7 @@ ${TOOL_INSTRUCTIONS}
 通过 execute_geogebra_commands 可用。**使用交互组件（Button, Slider, SetScript）前务必查阅上方「交互组件构建规范」中的精确语法模板。**
 - **交互组件**: Button, Slider, Checkbox, InputBox, SetScript（绑定点击/更新事件）
 - **动画控制**: StartAnimation, SetValue, SetAnimating, SetAnimationSpeed
-- **显示控制**: ShowGrid, ShowAxes, SetVisible, SetConditionToShowObject, SetActive
+- **显示控制**: ShowGrid, ShowAxes, SetVisible, SetConditionToShowObject, SetActive, ShowLabel, SetLabelMode
 - **属性设置**: SetColor, SetPointSize, SetLineThickness, SetCaption, SetCoords, SetFixed
 - **删除**: Delete
 
@@ -184,7 +185,7 @@ ${TOOL_INSTRUCTIONS}
 通过 execute_geogebra_commands 可用。**使用交互组件（Button, Slider, SetScript）前务必查阅上方「交互组件构建规范」中的精确语法模板。**
 - **交互组件**: Button, Slider, Checkbox, InputBox, SetScript（绑定点击/更新事件）
 - **动画控制**: StartAnimation, SetValue, SetAnimating, SetAnimationSpeed
-- **显示控制**: ShowGrid, ShowAxes, SetVisible, SetConditionToShowObject, SetActive
+- **显示控制**: ShowGrid, ShowAxes, SetVisible, SetConditionToShowObject, SetActive, ShowLabel, SetLabelMode
 - **属性设置**: SetColor, SetPointSize, SetLineThickness, SetCaption, SetCoords, SetFixed
 - **删除**: Delete
 

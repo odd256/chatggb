@@ -76,6 +76,13 @@ export function createGgbTools(board: BoardAPI) {
               "color: #f59e0b; font-weight: bold",
             );
             board.undo();
+          } else {
+            // Auto-hide labels for all created objects to avoid canvas clutter.
+            // AI can explicitly show labels with ShowLabel(name, true) for key objects.
+            const allLabels = results.flatMap((r) => r.labels || []);
+            for (const name of allLabels) {
+              board.evalCommand(`ShowLabel(${name}, false)`);
+            }
           }
 
           logEvalResults(explanation, results);
